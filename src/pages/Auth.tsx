@@ -29,7 +29,16 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      // Get original parameters and redirect to intended page
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      const guest = urlParams.get('guest');
+      
+      if (tab) {
+        navigate(`/?tab=${tab}`);
+      } else {
+        navigate('/');
+      }
     }
   }, [user, navigate]);
 
