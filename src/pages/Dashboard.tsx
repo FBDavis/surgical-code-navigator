@@ -22,6 +22,7 @@ import {
   Activity
 } from 'lucide-react';
 import { TutorialTooltip } from '@/components/TutorialTooltip';
+import { SpecialtyBranding } from '@/components/SpecialtyBranding';
 import { dashboardTutorial, generalTips } from '@/components/TutorialData';
 
 interface DashboardProps {
@@ -98,7 +99,10 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                   </h1>
                   <TutorialTooltip {...dashboardTutorial} />
                 </div>
-                <p className="text-muted-foreground">Your intelligent medical coding companion</p>
+                <div className="flex flex-col gap-1">
+                  <p className="text-muted-foreground">Your intelligent medical coding companion</p>
+                  <SpecialtyBranding />
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-2">

@@ -157,6 +157,8 @@ export type Database = {
           id: string
           license_number: string | null
           practice_name: string | null
+          specialty: Database["public"]["Enums"]["medical_specialty"] | null
+          specialty_theme: Json | null
           updated_at: string
           user_id: string
         }
@@ -168,6 +170,8 @@ export type Database = {
           id?: string
           license_number?: string | null
           practice_name?: string | null
+          specialty?: Database["public"]["Enums"]["medical_specialty"] | null
+          specialty_theme?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -179,6 +183,8 @@ export type Database = {
           id?: string
           license_number?: string | null
           practice_name?: string | null
+          specialty?: Database["public"]["Enums"]["medical_specialty"] | null
+          specialty_theme?: Json | null
           updated_at?: string
           user_id?: string
         }
@@ -224,6 +230,27 @@ export type Database = {
     }
     Enums: {
       app_role: "physician" | "admin" | "billing_specialist"
+      medical_specialty:
+        | "orthopedics"
+        | "general_surgery"
+        | "plastic_surgery"
+        | "ent"
+        | "cardiothoracic"
+        | "neurosurgery"
+        | "urology"
+        | "gynecology"
+        | "ophthalmology"
+        | "dermatology"
+        | "gastroenterology"
+        | "emergency_medicine"
+        | "family_medicine"
+        | "internal_medicine"
+        | "radiology"
+        | "anesthesiology"
+        | "pathology"
+        | "psychiatry"
+        | "pediatrics"
+        | "oncology"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -352,6 +379,28 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["physician", "admin", "billing_specialist"],
+      medical_specialty: [
+        "orthopedics",
+        "general_surgery",
+        "plastic_surgery",
+        "ent",
+        "cardiothoracic",
+        "neurosurgery",
+        "urology",
+        "gynecology",
+        "ophthalmology",
+        "dermatology",
+        "gastroenterology",
+        "emergency_medicine",
+        "family_medicine",
+        "internal_medicine",
+        "radiology",
+        "anesthesiology",
+        "pathology",
+        "psychiatry",
+        "pediatrics",
+        "oncology",
+      ],
     },
   },
 } as const

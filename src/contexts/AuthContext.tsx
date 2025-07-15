@@ -10,6 +10,8 @@ interface Profile {
   license_number: string | null;
   practice_name: string | null;
   default_rvu_rate: number | null;
+  specialty: string | null;
+  specialty_theme: any;
   created_at: string;
   updated_at: string;
 }
@@ -20,9 +22,9 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, displayName?: string, specialty?: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
-  updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
+  updateProfile: (updates: any) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -119,8 +121,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const signUp = async (email: string, password: string, displayName?: string) => {
+  const signUp = async (email: string, password: string, displayName?: string, specialty?: string) => {
     const redirectUrl = `${window.location.origin}/`;
+    
+    // Get specialty theme based on selection
+    const getSpecialtyTheme = (spec: string) => {
+      const themes = {
+        orthopedics: { primary_color: "220 90% 45%", accent_color: "220 50% 85%", name: "Orthopedics" },
+        general_surgery: { primary_color: "0 90% 45%", accent_color: "0 50% 85%", name: "General Surgery" },
+        plastic_surgery: { primary_color: "280 90% 45%", accent_color: "280 50% 85%", name: "Plastic Surgery" },
+        ent: { primary_color: "120 90% 35%", accent_color: "120 50% 85%", name: "ENT" },
+        cardiothoracic: { primary_color: "340 90% 45%", accent_color: "340 50% 85%", name: "Cardiothoracic" },
+        neurosurgery: { primary_color: "260 90% 45%", accent_color: "260 50% 85%", name: "Neurosurgery" },
+        urology: { primary_color: "200 90% 45%", accent_color: "200 50% 85%", name: "Urology" },
+        gynecology: { primary_color: "320 90% 45%", accent_color: "320 50% 85%", name: "Gynecology" },
+        ophthalmology: { primary_color: "180 90% 35%", accent_color: "180 50% 85%", name: "Ophthalmology" },
+        dermatology: { primary_color: "40 90% 45%", accent_color: "40 50% 85%", name: "Dermatology" },
+        emergency_medicine: { primary_color: "10 90% 45%", accent_color: "10 50% 85%", name: "Emergency Medicine" },
+        anesthesiology: { primary_color: "160 90% 35%", accent_color: "160 50% 85%", name: "Anesthesiology" }
+      };
+      return themes[spec as keyof typeof themes] || { primary_color: "195 100% 28%", accent_color: "195 50% 88%", name: "General Medicine" };
+    };
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -129,6 +150,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailRedirectTo: redirectUrl,
         data: {
           display_name: displayName || email.split('@')[0],
+          specialty: specialty || null,
+          specialty_theme: specialty ? getSpecialtyTheme(specialty) : null,
         },
       },
     });
@@ -147,7 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const updateProfile = async (updates: Partial<Profile>) => {
+  const updateProfile = async (updates: any) => {
     if (!user) return { error: new Error('No user logged in') };
 
     const { error } = await supabase

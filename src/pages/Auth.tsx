@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Shield, UserPlus, LogIn, Stethoscope } from 'lucide-react';
@@ -19,6 +20,7 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [practiceName, setPracticeName] = useState('');
+  const [specialty, setSpecialty] = useState('');
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('signin');
   
@@ -99,6 +101,7 @@ export default function Auth() {
             display_name: displayName,
             license_number: licenseNumber,
             practice_name: practiceName,
+            specialty: specialty || null,
           }
         }
       });
@@ -234,6 +237,37 @@ export default function Auth() {
                         disabled={isLoading}
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="specialty">Medical Specialty</Label>
+                    <Select value={specialty} onValueChange={setSpecialty} disabled={isLoading}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your specialty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="orthopedics">Orthopedics</SelectItem>
+                        <SelectItem value="general_surgery">General Surgery</SelectItem>
+                        <SelectItem value="plastic_surgery">Plastic Surgery</SelectItem>
+                        <SelectItem value="ent">ENT (Otolaryngology)</SelectItem>
+                        <SelectItem value="cardiothoracic">Cardiothoracic Surgery</SelectItem>
+                        <SelectItem value="neurosurgery">Neurosurgery</SelectItem>
+                        <SelectItem value="urology">Urology</SelectItem>
+                        <SelectItem value="gynecology">Gynecology</SelectItem>
+                        <SelectItem value="ophthalmology">Ophthalmology</SelectItem>
+                        <SelectItem value="dermatology">Dermatology</SelectItem>
+                        <SelectItem value="gastroenterology">Gastroenterology</SelectItem>
+                        <SelectItem value="emergency_medicine">Emergency Medicine</SelectItem>
+                        <SelectItem value="family_medicine">Family Medicine</SelectItem>
+                        <SelectItem value="internal_medicine">Internal Medicine</SelectItem>
+                        <SelectItem value="radiology">Radiology</SelectItem>
+                        <SelectItem value="anesthesiology">Anesthesiology</SelectItem>
+                        <SelectItem value="pathology">Pathology</SelectItem>
+                        <SelectItem value="psychiatry">Psychiatry</SelectItem>
+                        <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                        <SelectItem value="oncology">Oncology</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

@@ -27,7 +27,7 @@ serve(async (req) => {
   }
 
   try {
-    const { procedureDescription } = await req.json()
+    const { procedureDescription, specialty } = await req.json()
     
     const openaiApiKey = Deno.env.get('OpCoder AI Key')
     if (!openaiApiKey) {
@@ -35,7 +35,9 @@ serve(async (req) => {
     }
 
     // First, get primary CPT codes
-    const primaryPrompt = `You are a medical coding expert. Given this surgical procedure description: "${procedureDescription}"
+    const specialtyContext = specialty ? ` Focus specifically on ${specialty.replace('_', ' ')} procedures and commonly used codes in this specialty.` : '';
+    
+    const primaryPrompt = `You are a medical coding expert specializing in ${specialty ? specialty.replace('_', ' ') : 'general medicine'}. Given this surgical procedure description: "${procedureDescription}"${specialtyContext}
 
 Please identify the PRIMARY CPT codes that would be billable for this specific procedure. For each code, provide:
 1. The CPT code number
@@ -107,8 +109,9 @@ Order the results by billing priority and RVU value from highest to lowest.`
 
     // Get commonly associated codes
     const primaryCodesStr = primaryCodes.map(c => `${c.code} (${c.description})`).join(', ')
+    const specialtyAssociatedContext = specialty ? ` Focus on codes commonly used together in ${specialty.replace('_', ' ')} practice.` : '';
     
-    const associatedPrompt = `You are a medical coding expert. Given these PRIMARY CPT codes: ${primaryCodesStr}
+    const associatedPrompt = `You are a medical coding expert specializing in ${specialty ? specialty.replace('_', ' ') : 'general medicine'}. Given these PRIMARY CPT codes: ${primaryCodesStr}${specialtyAssociatedContext}
 
 Please identify COMMONLY ASSOCIATED CPT codes that are frequently billed together with these primary procedures. These should be:
 - Complementary procedures often performed at the same time

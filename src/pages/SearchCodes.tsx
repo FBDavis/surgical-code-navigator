@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, FileText, CheckCircle, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { TutorialTooltip } from '@/components/TutorialTooltip';
 import { searchCodesTutorial } from '@/components/TutorialData';
 
@@ -27,6 +28,7 @@ interface SearchResponse {
 }
 
 export const SearchCodes = () => {
+  const { user, profile } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [primaryCodes, setPrimaryCodes] = useState<CPTCode[]>([]);
   const [associatedCodes, setAssociatedCodes] = useState<CPTCode[]>([]);
@@ -70,7 +72,10 @@ export const SearchCodes = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('search-cpt-codes', {
-        body: { procedureDescription: text }
+        body: { 
+          procedureDescription: text,
+          specialty: user?.user_metadata?.specialty || profile?.specialty
+        }
       });
 
       if (error) {
@@ -215,7 +220,14 @@ export const SearchCodes = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Search className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Find CPT Codes</h1>
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold text-foreground">Find CPT Codes</h1>
+          {(profile?.specialty || user?.user_metadata?.specialty) && (
+            <div className="text-sm text-muted-foreground">
+              Specialized for {profile?.specialty?.replace('_', ' ') || user?.user_metadata?.specialty?.replace('_', ' ')}
+            </div>
+          )}
+        </div>
         <TutorialTooltip {...searchCodesTutorial} />
       </div>
 
