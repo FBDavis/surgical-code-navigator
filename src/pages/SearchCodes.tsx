@@ -170,10 +170,9 @@ export const SearchCodes = () => {
             <h2 className="text-lg font-semibold text-foreground">Recommended CPT Codes</h2>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={() => setShowChat(true)}
-                className="border-primary text-primary hover:bg-primary/5"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Chat with AI
