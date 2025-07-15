@@ -1,1 +1,62 @@
 project_id = "vkvneoujpipapcxgdopg"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+ip_version = "ipv4"
+port = 54323
+max_header_length = 4096
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1:54321"
+openai_api_key = "env(SUPABASE_AI_OPENAI_API_KEY)"
+
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+s3_host = "localhost"
+s3_port = 54327
+s3_protocol = "http"
+s3_access_key = "625729a08b95bf1b7ff351a663f3a23c"
+s3_secret_key = "850181e4652dd023b7a98c58ae0e2d3d248d0e99a306649c5b5a6a60cccf8a04"
+s3_region = "local"
+global_s3_bucket = "supa-storage-testing"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+
+[functions.search-cpt-codes]
+verify_jwt = false
+
+[functions.chat-cpt-codes]
+verify_jwt = false

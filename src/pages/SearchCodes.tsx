@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { DictationCard } from '@/components/DictationCard';
 import { CPTCodeCard } from '@/components/CPTCodeCard';
+import { ChatInterface } from '@/components/ChatInterface';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, FileText, CheckCircle } from 'lucide-react';
+import { Search, FileText, CheckCircle, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,6 +22,7 @@ export const SearchCodes = () => {
   const [searchResults, setSearchResults] = useState<CPTCode[]>([]);
   const [selectedCodes, setSelectedCodes] = useState<CPTCode[]>([]);
   const [lastQuery, setLastQuery] = useState('');
+  const [showChat, setShowChat] = useState(false);
   const { toast } = useToast();
 
   // Mock CPT codes for demonstration
@@ -163,9 +165,20 @@ export const SearchCodes = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">Recommended CPT Codes</h2>
-            <Badge variant="outline" className="border-primary text-primary">
-              {searchResults.length} codes found
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChat(true)}
+                className="border-primary text-primary hover:bg-primary/5"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Chat with AI
+              </Button>
+              <Badge variant="outline" className="border-primary text-primary">
+                {searchResults.length} codes found
+              </Badge>
+            </div>
           </div>
           
           <div className="space-y-3">
@@ -223,6 +236,17 @@ export const SearchCodes = () => {
             </div>
           </div>
         </Card>
+      )}
+
+      {showChat && lastQuery && (
+        <div className="space-y-4">
+          <ChatInterface
+            procedureDescription={lastQuery}
+            selectedCodes={selectedCodes}
+            searchResults={searchResults}
+            onClose={() => setShowChat(false)}
+          />
+        </div>
       )}
     </div>
   );
