@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { DictationCard } from '@/components/DictationCard';
 import { CPTCodeCard } from '@/components/CPTCodeCard';
 import { ChatInterface } from '@/components/ChatInterface';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
 import { 
   Plus, 
@@ -18,7 +20,8 @@ import {
   MessageSquare,
   Trash2,
   Save,
-  Brain
+  Brain,
+  AlertCircle
 } from 'lucide-react';
 
 interface CPTCode {
@@ -29,28 +32,50 @@ interface CPTCode {
   category: string;
 }
 
-interface Case {
-  id: string;
-  name: string;
-  patientName?: string;
-  date: string;
-  codes: CPTCode[];
+interface CaseData {
+  case_name: string;
+  patient_mrn?: string;
+  procedure_date?: string;
+  procedure_description?: string;
   notes?: string;
 }
 
 export const NewCase = () => {
   const { toast } = useToast();
-  const [currentCase, setCurrentCase] = useState<Case>({
-    id: crypto.randomUUID(),
-    name: 'New Case',
-    date: new Date().toISOString().split('T')[0],
-    codes: []
+  const { user, profile } = useAuth();
+  
+  const [caseData, setCaseData] = useState<CaseData>({
+    case_name: 'New Case',
+    procedure_date: new Date().toISOString().split('T')[0],
   });
+  const [selectedCodes, setSelectedCodes] = useState<CPTCode[]>([]);
   const [searchResults, setSearchResults] = useState<CPTCode[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
-  const [rvuRate, setRvuRate] = useState<number>(65); // Default $65 per RVU
+  const [rvuRate, setRvuRate] = useState<number>(profile?.default_rvu_rate || 65);
+
+  // Update RVU rate when profile loads
+  useEffect(() => {
+    if (profile?.default_rvu_rate) {
+      setRvuRate(profile.default_rvu_rate);
+    }
+  }, [profile]);
+
+  // Redirect if not authenticated
+  if (!user) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <AlertCircle className="h-5 w-5" />
+            Please sign in to create and manage cases.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleSearch = async (text: string, type: 'voice' | 'photo' | 'text') => {
     setIsProcessing(true);
@@ -81,8 +106,18 @@ export const NewCase = () => {
   };
 
   const handleAddCode = (code: CPTCode) => {
-    const updatedCodes = [...currentCase.codes, code];
-    setCurrentCase(prev => ({ ...prev, codes: updatedCodes }));
+    // Prevent duplicate codes
+    if (selectedCodes.some(c => c.code === code.code)) {
+      toast({
+        title: "Code already added",
+        description: `${code.code} is already in this case`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updatedCodes = [...selectedCodes, code];
+    setSelectedCodes(updatedCodes);
     toast({
       title: "Code added",
       description: `${code.code} added to case`,
@@ -90,23 +125,103 @@ export const NewCase = () => {
   };
 
   const handleRemoveCode = (codeToRemove: string) => {
-    const updatedCodes = currentCase.codes.filter(code => code.code !== codeToRemove);
-    setCurrentCase(prev => ({ ...prev, codes: updatedCodes }));
+    const updatedCodes = selectedCodes.filter(code => code.code !== codeToRemove);
+    setSelectedCodes(updatedCodes);
     toast({
       title: "Code removed",
       description: `${codeToRemove} removed from case`,
     });
   };
 
-  const totalRVUs = currentCase.codes.reduce((sum, code) => sum + code.rvu, 0);
+  const totalRVUs = selectedCodes.reduce((sum, code) => sum + code.rvu, 0);
   const estimatedValue = totalRVUs * rvuRate;
 
-  const handleSaveCase = () => {
-    // TODO: Implement case saving to database
-    toast({
-      title: "Case saved",
-      description: `${currentCase.name} has been saved`,
-    });
+  const handleSaveCase = async () => {
+    if (!user) return;
+    
+    if (!caseData.case_name.trim()) {
+      toast({
+        title: "Case name required",
+        description: "Please enter a case name before saving",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedCodes.length === 0) {
+      toast({
+        title: "No codes selected",
+        description: "Please add at least one CPT code to the case",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      // Insert case
+      const { data: caseResult, error: caseError } = await supabase
+        .from('cases')
+        .insert({
+          user_id: user.id,
+          case_name: caseData.case_name,
+          patient_mrn: caseData.patient_mrn || null,
+          procedure_date: caseData.procedure_date || null,
+          procedure_description: caseData.procedure_description || null,
+          notes: caseData.notes || null,
+          total_rvu: totalRVUs,
+          estimated_value: estimatedValue,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (caseError) throw caseError;
+
+      // Insert case codes
+      const caseCodesData = selectedCodes.map((code, index) => ({
+        case_id: caseResult.id,
+        user_id: user.id,
+        cpt_code: code.code,
+        description: code.description,
+        rvu: code.rvu,
+        category: code.category,
+        modifiers: code.modifiers || null,
+        position: index + 1,
+        is_primary: index === 0
+      }));
+
+      const { error: codesError } = await supabase
+        .from('case_codes')
+        .insert(caseCodesData);
+
+      if (codesError) throw codesError;
+
+      toast({
+        title: "Case saved successfully",
+        description: `${caseData.case_name} has been saved with ${selectedCodes.length} codes`,
+      });
+
+      // Reset form
+      setCaseData({
+        case_name: 'New Case',
+        procedure_date: new Date().toISOString().split('T')[0],
+      });
+      setSelectedCodes([]);
+      setSearchResults([]);
+      setLastQuery('');
+
+    } catch (error) {
+      console.error('Error saving case:', error);
+      toast({
+        title: "Error saving case",
+        description: "There was an error saving your case. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleOptimizeBilling = () => {
@@ -132,53 +247,94 @@ export const NewCase = () => {
                 <Brain className="h-4 w-4 mr-2" />
                 Optimize Billing
               </Button>
-              <Button onClick={handleSaveCase} variant="outline" size="sm">
+              <Button 
+                onClick={handleSaveCase} 
+                disabled={isSaving || selectedCodes.length === 0 || !caseData.case_name.trim()}
+                variant="outline" 
+                size="sm"
+              >
                 <Save className="h-4 w-4 mr-2" />
-                Save Case
+                {isSaving ? 'Saving...' : 'Save Case'}
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="caseName">Case Name</Label>
+              <Label htmlFor="caseName">Case Name *</Label>
               <Input
                 id="caseName"
-                value={currentCase.name}
-                onChange={(e) => setCurrentCase(prev => ({ ...prev, name: e.target.value }))}
+                value={caseData.case_name}
+                onChange={(e) => setCaseData(prev => ({ ...prev, case_name: e.target.value }))}
                 placeholder="Enter case name"
+                required
               />
             </div>
             <div>
-              <Label htmlFor="patientName">Patient Name (Optional)</Label>
+              <Label htmlFor="patientMrn">Patient MRN (HIPAA Compliant)</Label>
               <Input
-                id="patientName"
-                value={currentCase.patientName || ''}
-                onChange={(e) => setCurrentCase(prev => ({ ...prev, patientName: e.target.value }))}
-                placeholder="Enter patient name"
+                id="patientMrn"
+                value={caseData.patient_mrn || ''}
+                onChange={(e) => setCaseData(prev => ({ ...prev, patient_mrn: e.target.value }))}
+                placeholder="Medical Record Number"
               />
             </div>
             <div>
-              <Label htmlFor="caseDate">Date</Label>
+              <Label htmlFor="procedureDate">Procedure Date</Label>
               <Input
-                id="caseDate"
+                id="procedureDate"
                 type="date"
-                value={currentCase.date}
-                onChange={(e) => setCurrentCase(prev => ({ ...prev, date: e.target.value }))}
+                value={caseData.procedure_date}
+                onChange={(e) => setCaseData(prev => ({ ...prev, procedure_date: e.target.value }))}
               />
             </div>
           </div>
-          <div>
-            <Label htmlFor="rvuRate">RVU Compensation Rate ($/RVU)</Label>
-            <Input
-              id="rvuRate"
-              type="number"
-              value={rvuRate}
-              onChange={(e) => setRvuRate(Number(e.target.value))}
-              placeholder="65"
-              className="w-32"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="procedureDescription">Procedure Description</Label>
+              <Textarea
+                id="procedureDescription"
+                value={caseData.procedure_description || ''}
+                onChange={(e) => setCaseData(prev => ({ ...prev, procedure_description: e.target.value }))}
+                placeholder="Brief description of the procedure"
+                className="min-h-[80px]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="caseNotes">Case Notes</Label>
+              <Textarea
+                id="caseNotes"
+                value={caseData.notes || ''}
+                onChange={(e) => setCaseData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Additional notes for this case"
+                className="min-h-[80px]"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div>
+              <Label htmlFor="rvuRate">RVU Compensation Rate ($/RVU)</Label>
+              <Input
+                id="rvuRate"
+                type="number"
+                step="0.01"
+                value={rvuRate}
+                onChange={(e) => setRvuRate(Number(e.target.value))}
+                placeholder="65.00"
+                className="w-32"
+              />
+            </div>
+            {profile?.default_rvu_rate && rvuRate !== profile.default_rvu_rate && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRvuRate(profile.default_rvu_rate!)}
+                className="mt-6"
+              >
+                Use Profile Default (${profile.default_rvu_rate})
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -221,7 +377,7 @@ export const NewCase = () => {
       )}
 
       {/* Current Case Codes */}
-      {currentCase.codes.length > 0 && (
+      {selectedCodes.length > 0 && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -238,7 +394,7 @@ export const NewCase = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {currentCase.codes.map((code) => (
+              {selectedCodes.map((code) => (
                 <div key={code.code} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
@@ -302,7 +458,7 @@ export const NewCase = () => {
       {showChat && (
         <ChatInterface
           procedureDescription={lastQuery}
-          selectedCodes={currentCase.codes}
+          selectedCodes={selectedCodes}
           searchResults={searchResults}
           onClose={() => setShowChat(false)}
         />
