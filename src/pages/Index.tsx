@@ -11,14 +11,15 @@ const Index = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('home');
+  const isGuest = searchParams.get('guest') === 'true';
 
   useEffect(() => {
-    console.log('Auth check - user:', !!user, 'loading:', loading);
-    if (!loading && !user) {
+    console.log('Auth check - user:', !!user, 'loading:', loading, 'isGuest:', isGuest);
+    if (!loading && !user && !isGuest) {
       console.log('Redirecting to auth');
       navigate('/auth');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, isGuest]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -44,7 +45,7 @@ const Index = () => {
     );
   }
 
-  if (!user) {
+  if (!user && !isGuest) {
     return null;
   }
 
