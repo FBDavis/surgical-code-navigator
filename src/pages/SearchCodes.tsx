@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, FileText, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CPTCode {
   code: string;
@@ -52,20 +53,30 @@ export const SearchCodes = () => {
     setLastQuery(text);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // In a real app, this would call ChatGPT API to analyze the procedure description
-      setSearchResults(mockResults.sort((a, b) => b.rvu - a.rvu));
+      const { data, error } = await supabase.functions.invoke('search-cpt-codes', {
+        body: { procedureDescription: text }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const codes = data.codes || [];
+      setSearchResults(codes);
       
       toast({
         title: "CPT Codes Found",
-        description: `Found ${mockResults.length} relevant codes for your procedure`,
+        description: `Found ${codes.length} relevant codes for your procedure`,
       });
     } catch (error) {
+      console.error('Search error:', error);
       toast({
         title: "Search Failed",
-        description: "Unable to process your request. Please try again.",
+        description: error.message || "Unable to process your request. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -99,6 +110,31 @@ export const SearchCodes = () => {
         <Search className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">Find CPT Codes</h1>
       </div>
+
+      <Card className="p-4 bg-medical-light border-medical-accent/20 mb-4">
+        <p className="text-sm text-muted-foreground mb-3">
+          To use AI-powered CPT code search, you need to configure your OpenAI API key in Supabase secrets.
+        </p>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}
+          >
+            Get OpenAI API Key
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.open('https://supabase.com/dashboard/project/_/settings/secrets', '_blank')}
+          >
+            Configure in Supabase
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Add your OpenAI API key as "OPENAI_API_KEY" in Supabase Edge Function Secrets.
+        </p>
+      </Card>
 
       <DictationCard onSubmit={handleSearch} isProcessing={isProcessing} />
 
