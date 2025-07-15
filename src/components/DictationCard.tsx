@@ -56,20 +56,34 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
   const handleCameraCapture = async () => {
     setIsCapturingPhoto(true);
     try {
-      // Try Capacitor camera first (for mobile)
-      const image = await CapacitorCamera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.Base64,
-        source: CameraSource.Camera
-      });
+      // Check if we're in a Capacitor environment
+      const isCapacitor = (window as any).Capacitor?.isNativePlatform?.();
+      
+      if (isCapacitor) {
+        // Try Capacitor camera for mobile
+        const image = await CapacitorCamera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Camera
+        });
 
-      if (image.base64String) {
-        await processImage(image.base64String);
+        if (image.base64String) {
+          await processImage(image.base64String);
+        }
+      } else {
+        // Use file input for web
+        console.log('Using web file input for image capture');
+        fileInputRef.current?.click();
       }
-    } catch (capacitorError) {
-      console.log('Capacitor camera not available, falling back to file input');
-      // Fallback to file input for web
+    } catch (error) {
+      console.error('Camera capture error:', error);
+      toast({
+        title: "Camera Access Failed",
+        description: "Unable to access camera. Please try uploading an image file instead.",
+        variant: "destructive",
+      });
+      // Fallback to file input
       fileInputRef.current?.click();
     } finally {
       setIsCapturingPhoto(false);
@@ -78,17 +92,22 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setIsCapturingPhoto(false);
+      return;
+    }
 
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Invalid File",
-        description: "Please select an image file.",
+        description: "Please select an image file (JPG, PNG, etc.).",
         variant: "destructive",
       });
+      setIsCapturingPhoto(false);
       return;
     }
 
+    console.log('Processing uploaded file:', file.name, file.type);
     setIsCapturingPhoto(true);
     try {
       const base64 = await fileToBase64(file);
@@ -96,12 +115,16 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
     } catch (error) {
       console.error('Error processing file:', error);
       toast({
-        title: "Error",
-        description: "Failed to process the image.",
+        title: "Processing Error",
+        description: "Failed to process the image. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsCapturingPhoto(false);
+      // Clear the input so the same file can be selected again
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 
@@ -120,25 +143,39 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
   };
 
   const processImage = async (base64String: string) => {
+    console.log('Processing image, base64 length:', base64String.length);
     try {
+      toast({
+        title: "Processing Image",
+        description: "Extracting text from image...",
+      });
+
       const { data, error } = await supabase.functions.invoke('extract-text-from-image', {
         body: { imageBase64: base64String }
       });
 
       if (error) {
+        console.error('Supabase function error:', error);
         throw error;
       }
 
       if (data.error) {
+        console.error('Function returned error:', data.error);
         throw new Error(data.error);
       }
 
       const extractedText = data.extractedText;
+      console.log('Extracted text:', extractedText);
+      
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error('No readable text found in the image');
+      }
+
       setText(extractedText);
       
       toast({
-        title: "Text Extracted",
-        description: "Successfully extracted text from image.",
+        title: "Text Extracted Successfully",
+        description: `Extracted ${extractedText.length} characters of text.`,
       });
 
       // Automatically submit the extracted text
@@ -146,8 +183,8 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
     } catch (error) {
       console.error('Error extracting text:', error);
       toast({
-        title: "Extraction Failed",
-        description: "Unable to extract text from image. Please try again.",
+        title: "Text Extraction Failed",
+        description: error.message || "Unable to extract text from image. Please try again or type manually.",
         variant: "destructive",
       });
     }
@@ -187,6 +224,7 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
                 "transition-all duration-200",
                 isCapturingPhoto && "animate-pulse"
               )}
+              title="Capture or upload image"
             >
               {isCapturingPhoto ? <Upload className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
             </Button>
@@ -210,13 +248,14 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
           {isProcessing || isCapturingPhoto ? 'Processing...' : 'Find CPT Codes'}
         </Button>
 
-        {/* Hidden file input for web fallback */}
+        {/* Hidden file input for web */}
         <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileUpload}
-          accept="image/*"
+          accept="image/*,image/heic,image/heif"
           style={{ display: 'none' }}
+          capture="environment"
         />
       </div>
     </Card>
