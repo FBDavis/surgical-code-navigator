@@ -29,7 +29,7 @@ export function HomeCard({ title, description, icon: Icon, onClick, count, gradi
       </CardHeader>
       <CardContent>
         <CardDescription className="text-base mb-4">{description}</CardDescription>
-        <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+        <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
           Access {title}
         </Button>
       </CardContent>
