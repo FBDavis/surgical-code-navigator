@@ -11,11 +11,21 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('home');
 
+  const [guestMode, setGuestMode] = useState(false);
+
   useEffect(() => {
-    if (!loading && !user) {
+    // Check if coming from guest access
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('guest') === 'true') {
+      setGuestMode(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loading && !user && !guestMode) {
       navigate('/auth');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, guestMode, navigate]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -35,7 +45,7 @@ const Index = () => {
     );
   }
 
-  if (!user) {
+  if (!user && !guestMode) {
     return null;
   }
 

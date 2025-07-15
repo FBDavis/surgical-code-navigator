@@ -80,9 +80,9 @@ export const Dashboard = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">
-                  Welcome, {profile?.display_name || user?.email?.split('@')[0] || 'Doctor'}! 👋
+                  Welcome to OpCoder, {profile?.display_name || user?.email?.split('@')[0] || 'Doctor'}! 👋
                 </h1>
-                <p className="text-muted-foreground">Ready to find the perfect CPT codes for your procedures?</p>
+                <p className="text-muted-foreground">Your intelligent medical coding companion</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">

@@ -77,6 +77,14 @@ export default function Auth() {
     setIsLoading(false);
   };
 
+  const handleGuestAccess = () => {
+    toast({
+      title: 'Guest Access',
+      description: 'Continuing as guest for testing purposes.',
+    });
+    navigate('/?guest=true');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -86,7 +94,7 @@ export default function Auth() {
               <Stethoscope className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">CPT Code Assistant</h1>
+          <h1 className="text-3xl font-bold text-foreground">OpCoder</h1>
           <p className="text-muted-foreground mt-2">
             Your intelligent medical coding companion
           </p>
@@ -184,6 +192,20 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
+            
+            {/* Guest Access for Testing */}
+            <div className="mt-6 pt-6 border-t border-border/50">
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={handleGuestAccess}
+              >
+                Continue as Guest (Testing)
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Bypass authentication for testing purposes
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
