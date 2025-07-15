@@ -17,14 +17,23 @@ interface CPTCode {
   rvu: number;
   modifiers?: string[];
   category: string;
+  is_primary?: boolean;
+  position?: number;
+}
+
+interface SearchResponse {
+  primaryCodes: CPTCode[];
+  associatedCodes: CPTCode[];
 }
 
 export const SearchCodes = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [searchResults, setSearchResults] = useState<CPTCode[]>([]);
+  const [primaryCodes, setPrimaryCodes] = useState<CPTCode[]>([]);
+  const [associatedCodes, setAssociatedCodes] = useState<CPTCode[]>([]);
   const [selectedCodes, setSelectedCodes] = useState<CPTCode[]>([]);
   const [lastQuery, setLastQuery] = useState('');
   const [showChat, setShowChat] = useState(false);
+  const [isCreatingCase, setIsCreatingCase] = useState(false);
   const { toast } = useToast();
 
   // Mock CPT codes for demonstration
@@ -69,12 +78,13 @@ export const SearchCodes = () => {
         throw new Error(data.error);
       }
 
-      const codes = data.codes || [];
-      setSearchResults(codes);
+      const response = data as SearchResponse;
+      setPrimaryCodes(response.primaryCodes || []);
+      setAssociatedCodes(response.associatedCodes || []);
       
       toast({
         title: "CPT Codes Found",
-        description: `Found ${codes.length} relevant codes for your procedure`,
+        description: `Found ${response.primaryCodes?.length || 0} primary codes and ${response.associatedCodes?.length || 0} associated codes`,
       });
     } catch (error) {
       console.error('Search error:', error);
@@ -104,6 +114,57 @@ export const SearchCodes = () => {
       title: "Code Removed",
       description: `${codeToRemove} removed from your bill`,
     });
+  };
+
+  const handleCreateCase = async () => {
+    if (selectedCodes.length === 0) {
+      toast({
+        title: "No Codes Selected",
+        description: "Please select at least one CPT code to create a case.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingCase(true);
+
+    try {
+      const caseName = `Case - ${lastQuery.substring(0, 50)}${lastQuery.length > 50 ? '...' : ''}`;
+      
+      const { data, error } = await supabase.functions.invoke('create-case', {
+        body: {
+          caseName,
+          procedureDescription: lastQuery,
+          codes: selectedCodes
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      toast({
+        title: "Case Created Successfully",
+        description: data.message,
+      });
+
+      // Clear selected codes after successful case creation
+      setSelectedCodes([]);
+
+    } catch (error) {
+      console.error('Create case error:', error);
+      toast({
+        title: "Failed to Create Case",
+        description: error.message || "Unable to create case. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingCase(false);
+    }
   };
 
   const totalRVUs = selectedCodes.reduce((sum, code) => sum + code.rvu, 0);
@@ -145,7 +206,7 @@ export const SearchCodes = () => {
         </Card>
       )}
 
-      {lastQuery && searchResults.length > 0 && (
+      {lastQuery && (primaryCodes.length > 0 || associatedCodes.length > 0) && (
         <Card className="p-4 bg-medical-light border-medical-accent/20">
           <div className="flex items-start gap-2">
             <FileText className="w-5 h-5 text-primary mt-0.5" />
@@ -157,35 +218,61 @@ export const SearchCodes = () => {
         </Card>
       )}
 
-      {searchResults.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Recommended CPT Codes</h2>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setShowChat(true)}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Chat with AI
-              </Button>
-              <Badge variant="outline" className="border-primary text-primary">
-                {searchResults.length} codes found
-              </Badge>
+      {(primaryCodes.length > 0 || associatedCodes.length > 0) && (
+        <div className="space-y-6">
+          {primaryCodes.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">Primary CPT Codes</h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setShowChat(true)}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Chat with AI
+                  </Button>
+                  <Badge variant="outline" className="border-primary text-primary">
+                    {primaryCodes.length} primary codes
+                  </Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {primaryCodes.map((code) => (
+                  <CPTCodeCard
+                    key={code.code}
+                    cptCode={code}
+                    onAdd={handleAddCode}
+                    compensationRate={52}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-          
-          <div className="space-y-3">
-            {searchResults.map((code) => (
-              <CPTCodeCard
-                key={code.code}
-                cptCode={code}
-                onAdd={handleAddCode}
-                compensationRate={52} // Mock compensation rate
-              />
-            ))}
-          </div>
+          )}
+
+          {associatedCodes.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">Commonly Associated Codes</h2>
+                <Badge variant="secondary" className="border-muted-foreground/20">
+                  {associatedCodes.length} associated codes
+                </Badge>
+              </div>
+              
+              <div className="space-y-3">
+                {associatedCodes.map((code) => (
+                  <CPTCodeCard
+                    key={code.code}
+                    cptCode={code}
+                    onAdd={handleAddCode}
+                    compensationRate={52}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -229,6 +316,15 @@ export const SearchCodes = () => {
               <span className="text-sm text-muted-foreground">Estimated Value:</span>
               <span className="text-lg font-semibold text-success">${(totalRVUs * 52).toFixed(2)}</span>
             </div>
+            <div className="mt-4">
+              <Button 
+                onClick={handleCreateCase}
+                disabled={isCreatingCase}
+                className="w-full"
+              >
+                {isCreatingCase ? 'Creating Case...' : 'Create Case with Selected Codes'}
+              </Button>
+            </div>
           </div>
         </Card>
       )}
@@ -238,7 +334,7 @@ export const SearchCodes = () => {
           <ChatInterface
             procedureDescription={lastQuery}
             selectedCodes={selectedCodes}
-            searchResults={searchResults}
+            searchResults={[...primaryCodes, ...associatedCodes]}
             onClose={() => setShowChat(false)}
           />
         </div>

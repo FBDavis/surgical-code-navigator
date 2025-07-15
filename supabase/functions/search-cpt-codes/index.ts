@@ -12,6 +12,13 @@ interface CPTCode {
   rvu: number;
   modifiers?: string[];
   category: string;
+  is_primary?: boolean;
+  position?: number;
+}
+
+interface SearchResponse {
+  primaryCodes: CPTCode[];
+  associatedCodes: CPTCode[];
 }
 
 serve(async (req) => {
@@ -27,14 +34,16 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured')
     }
 
-    const prompt = `You are a medical coding expert. Given this surgical procedure description: "${procedureDescription}"
+    // First, get primary CPT codes
+    const primaryPrompt = `You are a medical coding expert. Given this surgical procedure description: "${procedureDescription}"
 
-Please identify all relevant CPT codes that would be billable for this procedure. For each code, provide:
+Please identify the PRIMARY CPT codes that would be billable for this specific procedure. For each code, provide:
 1. The CPT code number
 2. A brief description
 3. The current RVU value (approximate if exact not known)
 4. Any relevant modifiers that would maximize billing
 5. The category (Surgery, Radiology, etc.)
+6. Position order (1 for primary, 2 for secondary, etc.)
 
 Format your response as a JSON array of objects with this structure:
 {
@@ -42,12 +51,14 @@ Format your response as a JSON array of objects with this structure:
   "description": "Brief description",
   "rvu": 10.5,
   "modifiers": ["59", "78"],
-  "category": "Surgery"
+  "category": "Surgery",
+  "is_primary": true,
+  "position": 1
 }
 
-Order the results by RVU value from highest to lowest. Include primary procedure codes and any applicable add-on codes.`
+Order the results by billing priority and RVU value from highest to lowest.`
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const primaryResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openaiApiKey}`,
@@ -62,7 +73,7 @@ Order the results by RVU value from highest to lowest. Include primary procedure
           },
           {
             role: 'user',
-            content: prompt
+            content: primaryPrompt
           }
         ],
         max_tokens: 2000,
@@ -70,41 +81,114 @@ Order the results by RVU value from highest to lowest. Include primary procedure
       }),
     })
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`)
+    if (!primaryResponse.ok) {
+      throw new Error(`OpenAI API error: ${primaryResponse.statusText}`)
     }
 
-    const data = await response.json()
-    const content = data.choices[0]?.message?.content
+    const primaryData = await primaryResponse.json()
+    const primaryContent = primaryData.choices[0]?.message?.content
 
-    if (!content) {
-      throw new Error('No response from OpenAI')
+    if (!primaryContent) {
+      throw new Error('No response from OpenAI for primary codes')
     }
 
-    // Try to parse the JSON response
-    let cptCodes: CPTCode[]
+    // Parse primary codes
+    let primaryCodes: CPTCode[]
     try {
-      cptCodes = JSON.parse(content)
+      primaryCodes = JSON.parse(primaryContent)
     } catch (e) {
-      // If JSON parsing fails, try to extract JSON from the response
-      const jsonMatch = content.match(/\[[\s\S]*\]/)
+      const jsonMatch = primaryContent.match(/\[[\s\S]*\]/)
       if (jsonMatch) {
-        cptCodes = JSON.parse(jsonMatch[0])
+        primaryCodes = JSON.parse(jsonMatch[0])
       } else {
-        throw new Error('Invalid JSON response from OpenAI')
+        throw new Error('Invalid JSON response from OpenAI for primary codes')
       }
     }
 
-    // Ensure it's an array
-    if (!Array.isArray(cptCodes)) {
-      throw new Error('Response is not an array')
+    // Get commonly associated codes
+    const primaryCodesStr = primaryCodes.map(c => `${c.code} (${c.description})`).join(', ')
+    
+    const associatedPrompt = `You are a medical coding expert. Given these PRIMARY CPT codes: ${primaryCodesStr}
+
+Please identify COMMONLY ASSOCIATED CPT codes that are frequently billed together with these primary procedures. These should be:
+- Complementary procedures often performed at the same time
+- Related diagnostic codes
+- Common add-on procedures
+- Commonly required ancillary services
+
+For example:
+- Trigger release (26055) often associated with flexor tenosynovectomy (26145)
+- Carpal tunnel release often with nerve conduction studies
+- Joint injections often with imaging guidance
+
+For each associated code, provide:
+1. The CPT code number
+2. A brief description
+3. The current RVU value
+4. Any relevant modifiers
+5. The category
+6. Position order for billing
+
+Format as JSON array with same structure as before but set is_primary to false.`
+
+    const associatedResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a medical coding expert specializing in CPT codes and commonly associated procedures. Always respond with valid JSON only.'
+          },
+          {
+            role: 'user',
+            content: associatedPrompt
+          }
+        ],
+        max_tokens: 2000,
+        temperature: 0.2,
+      }),
+    })
+
+    let associatedCodes: CPTCode[] = []
+    if (associatedResponse.ok) {
+      const associatedData = await associatedResponse.json()
+      const associatedContent = associatedData.choices[0]?.message?.content
+      
+      if (associatedContent) {
+        try {
+          associatedCodes = JSON.parse(associatedContent)
+        } catch (e) {
+          const jsonMatch = associatedContent.match(/\[[\s\S]*\]/)
+          if (jsonMatch) {
+            associatedCodes = JSON.parse(jsonMatch[0])
+          }
+        }
+      }
     }
 
-    // Sort by RVU descending
-    cptCodes.sort((a, b) => b.rvu - a.rvu)
+    // Ensure arrays and sort by RVU descending
+    if (!Array.isArray(primaryCodes)) {
+      throw new Error('Primary codes response is not an array')
+    }
+    if (!Array.isArray(associatedCodes)) {
+      associatedCodes = []
+    }
+
+    primaryCodes.sort((a, b) => b.rvu - a.rvu)
+    associatedCodes.sort((a, b) => b.rvu - a.rvu)
+
+    const response: SearchResponse = {
+      primaryCodes,
+      associatedCodes
+    }
 
     return new Response(
-      JSON.stringify({ codes: cptCodes }),
+      JSON.stringify(response),
       { 
         headers: { 
           ...corsHeaders,
