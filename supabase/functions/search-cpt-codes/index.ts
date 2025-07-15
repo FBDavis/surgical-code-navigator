@@ -112,14 +112,12 @@ Order the results by billing priority and RVU value from highest to lowest.`
 
 Please identify COMMONLY ASSOCIATED CPT codes that are frequently billed together with these primary procedures. These should be:
 - Complementary procedures often performed at the same time
-- Related diagnostic codes
 - Common add-on procedures
-- Commonly required ancillary services
 
 For example:
 - Trigger release (26055) often associated with flexor tenosynovectomy (26145)
-- Carpal tunnel release often with nerve conduction studies
-- Joint injections often with imaging guidance
+- Carpal tunnel release often with additional nerve procedures
+- Joint procedures often with related joint work
 
 For each associated code, provide:
 1. The CPT code number
