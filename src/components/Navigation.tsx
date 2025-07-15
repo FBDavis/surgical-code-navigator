@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, Search, BarChart3, Settings, Menu, X, FilePlus } from 'lucide-react';
+import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavigationProps {
   activeTab: string;
@@ -10,6 +11,7 @@ interface NavigationProps {
 
 export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { signOut } = useAuth();
 
   const tabs = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -18,6 +20,10 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <>
@@ -53,6 +59,16 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
                 </Button>
               );
             })}
+            <div className="border-t pt-2">
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -85,6 +101,18 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
                 );
               })}
             </nav>
+            
+            {/* Logout Button at Bottom */}
+            <div className="px-2 pb-2">
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <LogOut className="w-5 h-5 mr-3" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>

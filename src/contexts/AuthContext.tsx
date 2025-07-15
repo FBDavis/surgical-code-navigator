@@ -141,6 +141,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setProfile(null);
+      // Navigate to auth page after logout
+      window.location.href = '/auth';
     }
     return { error };
   };
