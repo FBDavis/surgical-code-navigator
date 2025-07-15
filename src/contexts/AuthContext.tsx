@@ -7,6 +7,9 @@ interface Profile {
   user_id: string;
   display_name: string | null;
   email: string | null;
+  license_number: string | null;
+  practice_name: string | null;
+  default_rvu_rate: number | null;
   created_at: string;
   updated_at: string;
 }

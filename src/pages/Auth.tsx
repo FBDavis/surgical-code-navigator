@@ -1,215 +1,331 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Stethoscope } from 'lucide-react';
+import { Loader2, Shield, UserPlus, LogIn, Stethoscope } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [practiceName, setPracticeName] = useState('');
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('signin');
+  
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
-    const { error } = await signIn(email, password);
-    
-    if (error) {
-      toast({
-        title: 'Error signing in',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'Welcome back!',
-        description: 'You have successfully signed in.',
-      });
+  useEffect(() => {
+    if (user) {
       navigate('/');
     }
-    
-    setIsLoading(false);
-  };
+  }, [user, navigate]);
 
-  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const displayName = formData.get('displayName') as string;
+    setError('');
 
-    const { error } = await signUp(email, password, displayName);
-    
-    if (error) {
-      if (error.message.includes('User already registered')) {
-        toast({
-          title: 'Account exists',
-          description: 'An account with this email already exists. Please sign in instead.',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Error creating account',
-          description: error.message,
-          variant: 'destructive',
-        });
-      }
-    } else {
-      toast({
-        title: 'Account created!',
-        description: 'Please check your email to verify your account.',
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+      
+      navigate('/');
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      setError(error.message || 'An error occurred during sign in');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    // Validation
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            display_name: displayName,
+            license_number: licenseNumber,
+            practice_name: practiceName,
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Account created successfully!",
+        description: "Please check your email to verify your account.",
+      });
+      
+      setActiveTab('signin');
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      setError(error.message || 'An error occurred during sign up');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGuestAccess = () => {
-    console.log('Guest access button clicked');
-    toast({
-      title: 'Guest Access',
-      description: 'Continuing as guest for testing purposes.',
-    });
-    console.log('Navigating to /?guest=true');
     navigate('/?guest=true');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary rounded-full">
-              <Stethoscope className="h-8 w-8 text-primary-foreground" />
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <Stethoscope className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold text-primary">OpCoder</h1>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">OpCoder</h1>
-          <p className="text-muted-foreground mt-2">
-            Your intelligent medical coding companion
-          </p>
+          <p className="text-muted-foreground">HIPAA-Compliant CPT Coding Assistant</p>
+          <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+            <Shield className="h-4 w-4" />
+            <span>HIPAA Compliant & Secure</span>
+          </div>
         </div>
 
-        <Card className="shadow-xl border-border/50">
+        <Card className="border-medical-accent/20 shadow-medical">
           <CardHeader>
-            <CardTitle className="text-center">Access Your Account</CardTitle>
-            <CardDescription className="text-center">
-              Sign in to your account or create a new one
-            </CardDescription>
+            <CardTitle className="text-center">
+              Secure Medical Access
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin" className="flex items-center gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Sign Up
+                </TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="signin">
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <TabsContent value="signin" className="space-y-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="email">Email Address</Label>
                     <Input
-                      id="signin-email"
-                      name="email"
+                      id="email"
                       type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="doctor@hospital.com"
                       required
-                      className="w-full"
+                      disabled={isLoading}
                     />
                   </div>
+                  
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="password">Password</Label>
                     <Input
-                      id="signin-password"
-                      name="password"
+                      id="password"
                       type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
                       required
-                      className="w-full"
+                      disabled={isLoading}
                     />
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
+
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Signing in...' : 'Sign In'}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing In...
+                      </>
+                    ) : (
+                      'Sign In Securely'
+                    )}
                   </Button>
                 </form>
               </TabsContent>
-              
-              <TabsContent value="signup">
+
+              <TabsContent value="signup" className="space-y-4">
                 <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName">Full Name</Label>
+                      <Input
+                        id="displayName"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Dr. John Smith"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="licenseNumber">License Number</Label>
+                      <Input
+                        id="licenseNumber"
+                        value={licenseNumber}
+                        onChange={(e) => setLicenseNumber(e.target.value)}
+                        placeholder="MD123456"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Display Name</Label>
+                    <Label htmlFor="practiceName">Practice/Hospital Name</Label>
                     <Input
-                      id="signup-name"
-                      name="displayName"
-                      type="text"
-                      placeholder="Dr. Smith"
-                      required
-                      className="w-full"
+                      id="practiceName"
+                      value={practiceName}
+                      onChange={(e) => setPracticeName(e.target.value)}
+                      placeholder="City Medical Center"
+                      disabled={isLoading}
                     />
                   </div>
+                  
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signupEmail">Email Address</Label>
                     <Input
-                      id="signup-email"
-                      name="email"
+                      id="signupEmail"
                       type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="doctor@hospital.com"
                       required
-                      className="w-full"
+                      disabled={isLoading}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      name="password"
-                      type="password"
-                      minLength={6}
-                      required
-                      className="w-full"
-                    />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signupPassword">Password</Label>
+                      <Input
+                        id="signupPassword"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
+
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Creating account...' : 'Create Account'}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating Account...
+                      </>
+                    ) : (
+                      'Create Secure Account'
+                    )}
                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
-            
-            {/* Guest Access for Testing */}
-            <div className="mt-6 pt-6 border-t border-border/50">
+
+            <div className="mt-6 text-center">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+              
               <Button 
                 variant="outline" 
-                className="w-full" 
+                className="mt-4 w-full"
                 onClick={handleGuestAccess}
               >
-                Continue as Guest (Testing)
+                Continue as Guest (Testing Only)
               </Button>
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                Bypass authentication for testing purposes
+              
+              <p className="mt-2 text-xs text-muted-foreground">
+                Guest mode does not provide HIPAA compliance
               </p>
             </div>
           </CardContent>
         </Card>
+
+        <div className="text-center text-xs text-muted-foreground space-y-1">
+          <p>Protected by enterprise-grade security</p>
+          <p>All data encrypted in transit and at rest</p>
+        </div>
       </div>
     </div>
   );

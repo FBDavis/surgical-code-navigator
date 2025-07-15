@@ -14,29 +14,193 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      case_codes: {
+        Row: {
+          case_id: string
+          category: string | null
+          cpt_code: string
+          created_at: string
+          description: string
+          id: string
+          is_primary: boolean | null
+          modifiers: string[] | null
+          position: number | null
+          rvu: number
+          user_id: string
+        }
+        Insert: {
+          case_id: string
+          category?: string | null
+          cpt_code: string
+          created_at?: string
+          description: string
+          id?: string
+          is_primary?: boolean | null
+          modifiers?: string[] | null
+          position?: number | null
+          rvu: number
+          user_id: string
+        }
+        Update: {
+          case_id?: string
+          category?: string | null
+          cpt_code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_primary?: boolean | null
+          modifiers?: string[] | null
+          position?: number | null
+          rvu?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_codes_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cases: {
+        Row: {
+          case_name: string
+          created_at: string
+          estimated_value: number | null
+          id: string
+          notes: string | null
+          patient_mrn: string | null
+          procedure_date: string | null
+          procedure_description: string | null
+          status: string | null
+          total_rvu: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          case_name: string
+          created_at?: string
+          estimated_value?: number | null
+          id?: string
+          notes?: string | null
+          patient_mrn?: string | null
+          procedure_date?: string | null
+          procedure_description?: string | null
+          status?: string | null
+          total_rvu?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          case_name?: string
+          created_at?: string
+          estimated_value?: number | null
+          id?: string
+          notes?: string | null
+          patient_mrn?: string | null
+          procedure_date?: string | null
+          procedure_description?: string | null
+          status?: string | null
+          total_rvu?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
+          default_rvu_rate: number | null
           display_name: string | null
           email: string | null
           id: string
+          license_number: string | null
+          practice_name: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          default_rvu_rate?: number | null
           display_name?: string | null
           email?: string | null
           id?: string
+          license_number?: string | null
+          practice_name?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          default_rvu_rate?: number | null
           display_name?: string | null
           email?: string | null
           id?: string
+          license_number?: string | null
+          practice_name?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -46,10 +210,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "physician" | "admin" | "billing_specialist"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -176,6 +346,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["physician", "admin", "billing_specialist"],
+    },
   },
 } as const
