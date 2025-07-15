@@ -14,15 +14,19 @@ const Index = () => {
   const [guestMode, setGuestMode] = useState(false);
 
   useEffect(() => {
-    // Check if coming from guest access
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('guest') === 'true') {
+    // Check if coming from guest access using searchParams
+    const guest = searchParams.get('guest');
+    console.log('Guest parameter:', guest);
+    if (guest === 'true') {
+      console.log('Setting guest mode to true');
       setGuestMode(true);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
+    console.log('Auth check - user:', !!user, 'loading:', loading, 'guestMode:', guestMode);
     if (!loading && !user && !guestMode) {
+      console.log('Redirecting to auth');
       navigate('/auth');
     }
   }, [user, loading, guestMode, navigate]);

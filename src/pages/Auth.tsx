@@ -78,10 +78,12 @@ export default function Auth() {
   };
 
   const handleGuestAccess = () => {
+    console.log('Guest access button clicked');
     toast({
       title: 'Guest Access',
       description: 'Continuing as guest for testing purposes.',
     });
+    console.log('Navigating to /?guest=true');
     navigate('/?guest=true');
   };
 
