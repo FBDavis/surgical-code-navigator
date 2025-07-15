@@ -118,26 +118,19 @@ export const SearchCodes = () => {
 
       <Card className="p-4 bg-medical-light border-medical-accent/20 mb-4">
         <p className="text-sm text-muted-foreground mb-3">
-          To use AI-powered CPT code search, you need to configure your OpenAI API key in Supabase secrets.
+          AI-powered CPT code search is configured and ready to use with your OpCoder AI Key.
         </p>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}
+            onClick={() => window.open('https://supabase.com/dashboard/project/vkvneoujpipapcxgdopg/settings/functions', '_blank')}
           >
-            Get OpenAI API Key
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => window.open('https://supabase.com/dashboard/project/_/settings/secrets', '_blank')}
-          >
-            Configure in Supabase
+            View Supabase Secrets
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Add your OpenAI API key as "OPENAI_API_KEY" in Supabase Edge Function Secrets.
+          Your OpCoder AI Key is configured in Supabase Edge Function Secrets.
         </p>
       </Card>
 
