@@ -1,10 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Dashboard } from './Dashboard';
 import { SearchCodes } from './SearchCodes';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('home');
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -33,14 +66,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      {/* Main Content */}
-      <div className="md:ml-64 min-h-screen">
-        <main className="p-4 md:p-6 pb-20 md:pb-6">
-          {renderContent()}
-        </main>
-      </div>
+      {renderContent()}
     </div>
   );
 };
