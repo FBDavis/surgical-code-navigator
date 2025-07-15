@@ -16,15 +16,15 @@ const Index = () => {
 
   useEffect(() => {
     console.log('Auth check - user:', !!user, 'loading:', loading, 'isGuest:', isGuest);
-    // Always redirect to auth if no user, regardless of guest parameter
-    if (!loading && !user) {
+    // Redirect to auth if no user and not guest
+    if (!loading && !user && !isGuest) {
       console.log('Redirecting to auth');
       // Preserve any existing parameters when redirecting to auth
       const currentParams = searchParams.toString();
       const authUrl = currentParams ? `/auth?${currentParams}` : '/auth';
       navigate(authUrl);
     }
-  }, [user, loading, navigate, searchParams]);
+  }, [user, loading, navigate, searchParams, isGuest]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
