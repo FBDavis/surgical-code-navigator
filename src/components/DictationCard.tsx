@@ -242,7 +242,8 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
         <Button 
           onClick={handleSubmit}
           disabled={!text.trim() || isProcessing || isCapturingPhoto}
-          className="w-full bg-gradient-primary hover:bg-primary-hover transition-all duration-200"
+          variant="default"
+          className="w-full transition-all duration-200"
         >
           <Send className="w-4 h-4 mr-2" />
           {isProcessing || isCapturingPhoto ? 'Processing...' : 'Find CPT Codes'}
