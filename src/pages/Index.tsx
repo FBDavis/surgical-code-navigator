@@ -12,16 +12,13 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('home');
 
-  // Check for guest mode immediately from URL params
-  const isGuestMode = searchParams.get('guest') === 'true';
-
   useEffect(() => {
-    console.log('Auth check - user:', !!user, 'loading:', loading, 'isGuestMode:', isGuestMode);
-    if (!loading && !user && !isGuestMode) {
+    console.log('Auth check - user:', !!user, 'loading:', loading);
+    if (!loading && !user) {
       console.log('Redirecting to auth');
       navigate('/auth');
     }
-  }, [user, loading, isGuestMode, navigate]);
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -33,10 +30,6 @@ const Index = () => {
   const handleTabChange = (tab: string) => {
     const params = new URLSearchParams(searchParams);
     params.set('tab', tab);
-    // Preserve guest mode parameter if it exists
-    if (isGuestMode) {
-      params.set('guest', 'true');
-    }
     navigate(`/?${params.toString()}`);
   };
 
@@ -51,7 +44,7 @@ const Index = () => {
     );
   }
 
-  if (!user && !isGuestMode) {
+  if (!user) {
     return null;
   }
 
