@@ -22,7 +22,11 @@ import {
   Activity
 } from 'lucide-react';
 
-export const Dashboard = () => {
+interface DashboardProps {
+  onTabChange?: (tab: string) => void;
+}
+
+export const Dashboard = ({ onTabChange }: DashboardProps) => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
@@ -39,18 +43,22 @@ export const Dashboard = () => {
   const commonProcedures = 47;
 
   const handleNavigation = (tab: string) => {
-    switch (tab) {
-      case 'search':
-        navigate('/?tab=search');
-        break;
-      case 'analytics':
-        navigate('/?tab=analytics');
-        break;
-      case 'settings':
-        navigate('/?tab=settings');
-        break;
-      default:
-        navigate('/');
+    if (onTabChange) {
+      onTabChange(tab);
+    } else {
+      switch (tab) {
+        case 'search':
+          navigate('/?tab=search');
+          break;
+        case 'analytics':
+          navigate('/?tab=analytics');
+          break;
+        case 'settings':
+          navigate('/?tab=settings');
+          break;
+        default:
+          navigate('/');
+      }
     }
   };
 

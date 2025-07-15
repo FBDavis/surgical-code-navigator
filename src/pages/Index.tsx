@@ -29,6 +29,16 @@ const Index = () => {
     }
   }, [searchParams]);
 
+  const handleTabChange = (tab: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', tab);
+    // Preserve guest mode parameter if it exists
+    if (isGuestMode) {
+      params.set('guest', 'true');
+    }
+    navigate(`/?${params.toString()}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -47,25 +57,48 @@ const Index = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard />;
+        return <Dashboard onTabChange={handleTabChange} />;
       case 'search':
-        return <SearchCodes />;
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-6">
+              <SearchCodes />
+            </div>
+          </div>
+        );
       case 'analytics':
         return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Analytics Dashboard</h2>
-            <p className="text-muted-foreground">Detailed RVU analytics and reporting coming soon...</p>
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-6">
+              <div className="text-center py-12">
+                <h2 className="text-2xl font-bold text-foreground mb-4">Analytics Dashboard</h2>
+                <p className="text-muted-foreground">Detailed RVU analytics and reporting coming soon...</p>
+              </div>
+            </div>
           </div>
         );
       case 'settings':
         return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Settings</h2>
-            <p className="text-muted-foreground">Compensation rate settings and preferences coming soon...</p>
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-6">
+              <div className="text-center py-12">
+                <h2 className="text-2xl font-bold text-foreground mb-4">Settings</h2>
+                <p className="text-muted-foreground">Compensation rate settings and preferences coming soon...</p>
+              </div>
+            </div>
           </div>
         );
       default:
-        return <Dashboard />;
+        return <Dashboard onTabChange={handleTabChange} />;
     }
   };
 
