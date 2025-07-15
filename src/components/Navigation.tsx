@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, Search, BarChart3, Settings, Menu, X } from 'lucide-react';
+import { Home, Search, BarChart3, Settings, Menu, X, FilePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavigationProps {
@@ -13,6 +13,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
 
   const tabs = [
     { id: 'home', label: 'Dashboard', icon: Home },
+    { id: 'newcase', label: 'New Case', icon: FilePlus },
     { id: 'search', label: 'Find Codes', icon: Search },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -90,7 +91,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
 
       {/* Bottom Navigation for Mobile */}
       <div className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t border-medical-accent/10 z-50">
-        <div className="grid grid-cols-4 gap-1 p-2">
+        <div className="grid grid-cols-5 gap-1 p-2">
           {tabs.map((tab) => {
             const IconComponent = tab.icon;
             return (

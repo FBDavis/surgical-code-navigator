@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Dashboard } from './Dashboard';
 import { SearchCodes } from './SearchCodes';
+import { NewCase } from './NewCase';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
@@ -58,6 +59,17 @@ const Index = () => {
     switch (activeTab) {
       case 'home':
         return <Dashboard onTabChange={handleTabChange} />;
+      case 'newcase':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-6">
+              <NewCase />
+            </div>
+          </div>
+        );
       case 'search':
         return (
           <div className="min-h-screen">
