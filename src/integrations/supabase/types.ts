@@ -217,6 +217,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      reset_user_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "physician" | "admin" | "billing_specialist"

@@ -4,6 +4,7 @@ import { Navigation } from '@/components/Navigation';
 import { Dashboard } from './Dashboard';
 import { SearchCodes } from './SearchCodes';
 import { NewCase } from './NewCase';
+import { Settings } from './Settings';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
@@ -96,10 +97,7 @@ const Index = () => {
               <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
             <div className="md:ml-64 p-6">
-              <div className="text-center py-12">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Settings</h2>
-                <p className="text-muted-foreground">Compensation rate settings and preferences coming soon...</p>
-              </div>
+              <Settings />
             </div>
           </div>
         );
