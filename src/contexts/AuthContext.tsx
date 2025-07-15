@@ -42,41 +42,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    let mounted = true;
+
+    // Initialize session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (session?.user) {
-          // Fetch user profile
-          setTimeout(async () => {
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // Fetch user profile
             const { data: profileData, error } = await supabase
               .from('profiles')
               .select('*')
               .eq('user_id', session.user.id)
               .single();
             
-            if (!error && profileData) {
+            if (!error && profileData && mounted) {
               setProfile(profileData);
             }
-          }, 0);
-        } else {
-          setProfile(null);
+          } else {
+            setProfile(null);
+          }
+          
+          setLoading(false);
         }
-        
-        setLoading(false);
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // Fetch user profile
+            const { data: profileData, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .single();
+            
+            if (!error && profileData && mounted) {
+              setProfile(profileData);
+            }
+          } else {
+            setProfile(null);
+          }
+        }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
