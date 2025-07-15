@@ -9,6 +9,7 @@ interface CPTCode {
   rvu: number;
   modifiers?: string[];
   category: string;
+  whenNeeded?: string;
 }
 
 interface CPTCodeCardProps {
@@ -59,6 +60,17 @@ export const CPTCodeCard = ({ cptCode, onAdd, compensationRate = 0 }: CPTCodeCar
                   {modifier}
                 </Badge>
               ))}
+            </div>
+          )}
+          
+          {cptCode.whenNeeded && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 rounded-lg p-3 mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-xs font-medium text-blue-600">When to use:</span>
+              </div>
+              <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                {cptCode.whenNeeded}
+              </p>
             </div>
           )}
         </div>

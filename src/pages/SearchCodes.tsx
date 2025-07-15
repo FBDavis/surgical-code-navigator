@@ -20,6 +20,7 @@ interface CPTCode {
   category: string;
   is_primary?: boolean;
   position?: number;
+  whenNeeded?: string;
 }
 
 interface SearchResponse {

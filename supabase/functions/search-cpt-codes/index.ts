@@ -14,6 +14,7 @@ interface CPTCode {
   category: string;
   is_primary?: boolean;
   position?: number;
+  whenNeeded?: string;
 }
 
 interface SearchResponse {
@@ -129,8 +130,19 @@ For each associated code, provide:
 4. Any relevant modifiers
 5. The category
 6. Position order for billing
+7. A brief explanation of WHEN this code would be needed or appropriate to use
 
-Format as JSON array with same structure as before but set is_primary to false.`
+Format as JSON array with this structure:
+{
+  "code": "12345",
+  "description": "Brief description",
+  "rvu": 5.2,
+  "modifiers": ["59"],
+  "category": "Surgery",
+  "is_primary": false,
+  "position": 3,
+  "whenNeeded": "Brief explanation of when this code is appropriate to bill alongside the primary procedure"
+}`
 
     const associatedResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
