@@ -52,6 +52,9 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
         case 'search':
           navigate('/?tab=search');
           break;
+        case 'newcase':
+          navigate('/?tab=newcase');
+          break;
         case 'analytics':
           navigate('/?tab=analytics');
           break;
@@ -117,6 +120,30 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
       </div>
 
       <div className="p-6 space-y-8">
+        {/* Quick Actions - Mobile Priority */}
+        <div className="block md:hidden">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-primary" />
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <Button
+              onClick={() => handleNavigation('search')}
+              className="h-20 flex-col gap-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
+            >
+              <Search className="w-6 h-6" />
+              <span className="font-medium">Find Codes</span>
+            </Button>
+            <Button
+              onClick={() => handleNavigation('newcase')}
+              className="h-20 flex-col gap-2 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
+            >
+              <FileText className="w-6 h-6" />
+              <span className="font-medium">New Case</span>
+            </Button>
+          </div>
+        </div>
+
         {/* Stats Overview */}
         <StatsOverview 
           totalSearches={totalSearches}
@@ -125,8 +152,8 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
           totalRVUs={totalRVUs}
         />
 
-        {/* Main Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Main Feature Cards - Desktop Priority */}
+        <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <HomeCard
             title="Find Codes"
             description="Search for CPT codes using procedure descriptions or keywords"
@@ -168,6 +195,29 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             onClick={() => handleNavigation('settings')}
             gradient="from-slate-500/20 to-slate-600/5"
           />
+        </div>
+
+        {/* Mobile: Simplified Feature Grid */}
+        <div className="block md:hidden">
+          <h2 className="text-lg font-semibold text-foreground mb-4">More Features</h2>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <HomeCard
+              title="Common Procedures"
+              description="Your most used codes"
+              icon={History}
+              onClick={() => {}}
+              count={commonProcedures}
+              gradient="from-green-500/20 to-green-600/5"
+            />
+            
+            <HomeCard
+              title="Analytics"
+              description="RVU analytics dashboard"
+              icon={BarChart3}
+              onClick={() => handleNavigation('analytics')}
+              gradient="from-orange-500/20 to-orange-600/5"
+            />
+          </div>
         </div>
 
         <Separator className="my-8" />
