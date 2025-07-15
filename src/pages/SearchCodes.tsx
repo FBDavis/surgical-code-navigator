@@ -231,23 +231,6 @@ export const SearchCodes = () => {
         <TutorialTooltip {...searchCodesTutorial} />
       </div>
 
-      <Card className="p-4 bg-medical-light border-medical-accent/20 mb-4">
-        <p className="text-sm text-muted-foreground mb-3">
-          AI-powered CPT code search is configured and ready to use with your OpCoder AI Key.
-        </p>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => window.open('https://supabase.com/dashboard/project/vkvneoujpipapcxgdopg/settings/functions', '_blank')}
-          >
-            View Supabase Secrets
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Your OpCoder AI Key is configured in Supabase Edge Function Secrets.
-        </p>
-      </Card>
 
       <DictationCard onSubmit={handleSearch} isProcessing={isProcessing || isAnalyzingDictation} />
 
