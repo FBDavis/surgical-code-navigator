@@ -21,6 +21,8 @@ import {
   Clock,
   Activity
 } from 'lucide-react';
+import { TutorialTooltip } from '@/components/TutorialTooltip';
+import { dashboardTutorial, generalTips } from '@/components/TutorialData';
 
 interface DashboardProps {
   onTabChange?: (tab: string) => void;
@@ -87,13 +89,20 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 <Stethoscope className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  Welcome to OpCoder, {profile?.display_name || user?.email?.split('@')[0] || 'Doctor'}! 👋
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-foreground">
+                    Welcome to OpCoder, {profile?.display_name || user?.email?.split('@')[0] || 'Doctor'}! 👋
+                  </h1>
+                  <TutorialTooltip {...dashboardTutorial} />
+                </div>
                 <p className="text-muted-foreground">Your intelligent medical coding companion</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              <TutorialTooltip 
+                {...generalTips} 
+                className="mr-2"
+              />
               <Button variant="outline" size="sm">
                 <User className="w-4 h-4 mr-2" />
                 Profile

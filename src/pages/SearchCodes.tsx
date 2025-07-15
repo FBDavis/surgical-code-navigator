@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Search, FileText, CheckCircle, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { TutorialTooltip } from '@/components/TutorialTooltip';
+import { searchCodesTutorial } from '@/components/TutorialData';
 
 interface CPTCode {
   code: string;
@@ -111,6 +113,7 @@ export const SearchCodes = () => {
       <div className="flex items-center gap-2">
         <Search className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">Find CPT Codes</h1>
+        <TutorialTooltip {...searchCodesTutorial} />
       </div>
 
       <Card className="p-4 bg-medical-light border-medical-accent/20 mb-4">

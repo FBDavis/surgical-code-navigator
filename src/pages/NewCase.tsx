@@ -23,6 +23,8 @@ import {
   Brain,
   AlertCircle
 } from 'lucide-react';
+import { TutorialTooltip } from '@/components/TutorialTooltip';
+import { newCaseTutorial } from '@/components/TutorialData';
 
 interface CPTCode {
   code: string;
@@ -241,6 +243,7 @@ export const NewCase = () => {
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Case Management
+              <TutorialTooltip {...newCaseTutorial} />
             </CardTitle>
             <div className="flex gap-2">
               <Button onClick={handleOptimizeBilling} variant="outline" size="sm">
