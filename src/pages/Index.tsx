@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Dashboard } from './Dashboard';
 import { SearchCodes } from './SearchCodes';
@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('home');
   const isGuest = searchParams.get('guest') === 'true';
@@ -27,16 +28,51 @@ const Index = () => {
   }, [user, loading, navigate, searchParams, isGuest]);
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) {
-      setActiveTab(tab);
+    // Set active tab based on current route
+    const path = location.pathname;
+    if (path === '/dashboard') {
+      setActiveTab('home');
+    } else if (path === '/new-case') {
+      setActiveTab('newcase');
+    } else if (path === '/search-codes') {
+      setActiveTab('search');
+    } else if (path === '/settings') {
+      setActiveTab('settings');
+    } else {
+      // Check for tab parameter as fallback
+      const tab = searchParams.get('tab');
+      if (tab) {
+        setActiveTab(tab);
+      } else {
+        setActiveTab('home');
+      }
     }
-  }, [searchParams]);
+  }, [location.pathname, searchParams]);
 
   const handleTabChange = (tab: string) => {
     const params = new URLSearchParams(searchParams);
-    params.set('tab', tab);
-    navigate(`/?${params.toString()}`);
+    let route = '/';
+    
+    switch (tab) {
+      case 'home':
+        route = '/dashboard';
+        break;
+      case 'newcase':
+        route = '/new-case';
+        break;
+      case 'search':
+        route = '/search-codes';
+        break;
+      case 'settings':
+        route = '/settings';
+        break;
+      default:
+        route = '/dashboard';
+    }
+    
+    // Preserve guest parameter if it exists
+    const routeWithParams = params.toString() ? `${route}?${params.toString()}` : route;
+    navigate(routeWithParams);
   };
 
   if (loading) {
