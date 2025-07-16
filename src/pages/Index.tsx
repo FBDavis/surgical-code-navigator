@@ -38,6 +38,13 @@ const Index = () => {
       setActiveTab('search');
     } else if (path === '/settings') {
       setActiveTab('settings');
+    } else if (path === '/') {
+      // For root path, redirect to dashboard to ensure proper navigation
+      if (!loading) {
+        const params = new URLSearchParams(searchParams);
+        const routeWithParams = params.toString() ? `/dashboard?${params.toString()}` : '/dashboard';
+        navigate(routeWithParams, { replace: true });
+      }
     } else {
       // Check for tab parameter as fallback
       const tab = searchParams.get('tab');
@@ -47,7 +54,7 @@ const Index = () => {
         setActiveTab('home');
       }
     }
-  }, [location.pathname, searchParams]);
+  }, [location.pathname, searchParams, loading, navigate]);
 
   const handleTabChange = (tab: string) => {
     const params = new URLSearchParams(searchParams);
