@@ -31,15 +31,20 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      // Get original parameters and redirect to intended page
+      // Check for returnTo parameter to redirect to original destination
       const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab');
-      const guest = urlParams.get('guest');
+      const returnTo = urlParams.get('returnTo');
       
-      if (tab) {
-        navigate(`/?tab=${tab}`);
+      if (returnTo) {
+        navigate(decodeURIComponent(returnTo));
       } else {
-        navigate('/');
+        // Fallback to legacy tab parameter or dashboard
+        const tab = urlParams.get('tab');
+        if (tab) {
+          navigate(`/?tab=${tab}`);
+        } else {
+          navigate('/dashboard');
+        }
       }
     }
   }, [user, navigate]);

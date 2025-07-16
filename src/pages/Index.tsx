@@ -20,12 +20,14 @@ const Index = () => {
     // Redirect to auth if no user and not guest
     if (!loading && !user && !isGuest) {
       console.log('Redirecting to auth');
-      // Preserve any existing parameters when redirecting to auth
+      // Preserve current path and parameters when redirecting to auth
+      const currentPath = location.pathname;
       const currentParams = searchParams.toString();
-      const authUrl = currentParams ? `/auth?${currentParams}` : '/auth';
+      const returnTo = encodeURIComponent(currentPath + (currentParams ? `?${currentParams}` : ''));
+      const authUrl = `/auth?returnTo=${returnTo}`;
       navigate(authUrl);
     }
-  }, [user, loading, navigate, searchParams, isGuest]);
+  }, [user, loading, navigate, searchParams, isGuest, location.pathname]);
 
   useEffect(() => {
     // Set active tab based on current route
