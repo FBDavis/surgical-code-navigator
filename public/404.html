@@ -6,17 +6,24 @@
     <script type="text/javascript">
       // GitHub Pages redirect for React Router
       var l = window.location;
-      var redirect = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/surgical-code-navigator/';
       
-      // If we're at the root with query params, redirect to index with encoded params
-      if (l.pathname === '/surgical-code-navigator/' && l.search) {
-        redirect += '?/' + l.search.slice(1).replace(/&/g, '~and~');
-      } else if (l.pathname !== '/surgical-code-navigator/') {
-        // For other paths, use the standard encoding
-        var segments = l.pathname.split('/').slice(2); // Remove empty and repo name
-        redirect += '?/' + segments.join('/').replace(/&/g, '~and~');
+      // Detect if we're on a GitHub Pages project site or user site
+      var pathSegments = l.pathname.split('/').filter(Boolean);
+      var isProjectSite = pathSegments.length > 0 && pathSegments[0] !== '';
+      
+      var basePath = isProjectSite ? '/' + pathSegments[0] + '/' : '/';
+      var remainingPath = isProjectSite ? pathSegments.slice(1).join('/') : pathSegments.join('/');
+      
+      var redirect = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + basePath;
+      
+      // If we have a path or search params, encode them
+      if (remainingPath || l.search) {
+        redirect += '?/';
+        if (remainingPath) {
+          redirect += remainingPath;
+        }
         if (l.search) {
-          redirect += '&' + l.search.slice(1).replace(/&/g, '~and~');
+          redirect += (remainingPath ? '&' : '') + l.search.slice(1).replace(/&/g, '~and~');
         }
       }
       
