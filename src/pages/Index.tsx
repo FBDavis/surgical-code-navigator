@@ -88,6 +88,9 @@ const Index = () => {
       case 'camera':
         route = '/camera-schedule';
         break;
+      case 'messages':
+        route = '/messages';
+        break;
       case 'settings':
         route = '/settings';
         break;

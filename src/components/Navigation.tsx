@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, Camera } from 'lucide-react';
+import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, Camera, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,6 +18,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'newcase', label: 'New Case', icon: FilePlus },
     { id: 'search', label: 'Find Codes', icon: Search },
     { id: 'camera', label: 'Schedule Scanner', icon: Camera },
+    { id: 'messages', label: 'Messages', icon: MessageSquare },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -121,7 +122,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
       {/* Bottom Navigation for Mobile */}
       <div className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t border-medical-accent/10 z-50">
         <div className="grid grid-cols-5 gap-1 p-2">
-          {tabs.map((tab) => {
+          {tabs.slice(0, 5).map((tab) => {
             const IconComponent = tab.icon;
             return (
               <Button
