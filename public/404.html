@@ -5,15 +5,26 @@
     <title>Surgical Code Navigator</title>
     <script type="text/javascript">
       // GitHub Pages redirect for React Router
-      var pathSegmentsToKeep = 1;
       var l = window.location;
-      l.replace(
-        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash
-      );
+      var redirect = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/surgical-code-navigator/';
+      
+      // If we're at the root with query params, redirect to index with encoded params
+      if (l.pathname === '/surgical-code-navigator/' && l.search) {
+        redirect += '?/' + l.search.slice(1).replace(/&/g, '~and~');
+      } else if (l.pathname !== '/surgical-code-navigator/') {
+        // For other paths, use the standard encoding
+        var segments = l.pathname.split('/').slice(2); // Remove empty and repo name
+        redirect += '?/' + segments.join('/').replace(/&/g, '~and~');
+        if (l.search) {
+          redirect += '&' + l.search.slice(1).replace(/&/g, '~and~');
+        }
+      }
+      
+      if (l.hash) {
+        redirect += l.hash;
+      }
+      
+      l.replace(redirect);
     </script>
   </head>
   <body>
