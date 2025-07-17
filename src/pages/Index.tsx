@@ -4,6 +4,7 @@ import { Navigation } from '@/components/Navigation';
 import { Dashboard } from './Dashboard';
 import { SearchCodes } from './SearchCodes';
 import { NewCase } from './NewCase';
+import CameraSchedule from './CameraSchedule';
 import { Settings } from './Settings';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -38,6 +39,8 @@ const Index = () => {
       setActiveTab('newcase');
     } else if (path === '/search-codes') {
       setActiveTab('search');
+    } else if (path === '/camera-schedule') {
+      setActiveTab('camera');
     } else if (path === '/settings') {
       setActiveTab('settings');
     } else if (path === '/') {
@@ -71,6 +74,9 @@ const Index = () => {
         break;
       case 'search':
         route = '/search-codes';
+        break;
+      case 'camera':
+        route = '/camera-schedule';
         break;
       case 'settings':
         route = '/settings';
@@ -122,6 +128,17 @@ const Index = () => {
             </div>
             <div className="md:ml-64 p-6">
               <SearchCodes />
+            </div>
+          </div>
+        );
+      case 'camera':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-6">
+              <CameraSchedule />
             </div>
           </div>
         );
