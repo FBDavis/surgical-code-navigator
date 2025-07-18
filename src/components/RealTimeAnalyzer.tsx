@@ -57,7 +57,21 @@ export const RealTimeAnalyzer = ({
   const debouncedText = useDebounce(dictationText, 2000);
 
   const analyzeDocumentation = useCallback(async (text: string) => {
-    if (!text.trim() || text.length < 20) {
+    // Only analyze if text is substantial enough to be a complete dictation
+    if (!text.trim() || text.length < 100) {
+      setAnalysis(null);
+      onAnalysisUpdate(null);
+      return;
+    }
+
+    // Check if this appears to be a complete dictation (has procedure details)
+    const hasCompleteDictation = text.toLowerCase().includes('procedure') || 
+                                text.toLowerCase().includes('surgery') ||
+                                text.toLowerCase().includes('operation') ||
+                                text.toLowerCase().includes('incision') ||
+                                text.split('.').length > 3; // Multiple sentences
+
+    if (!hasCompleteDictation) {
       setAnalysis(null);
       onAnalysisUpdate(null);
       return;
