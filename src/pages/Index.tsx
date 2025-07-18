@@ -52,6 +52,8 @@ const Index = () => {
       setActiveTab('search');
     } else if (path === '/camera-schedule') {
       setActiveTab('camera');
+    } else if (path === '/resident-tracker') {
+      setActiveTab('resident');
     } else if (path === '/settings') {
       setActiveTab('settings');
     } else if (path === '/subscription') {
