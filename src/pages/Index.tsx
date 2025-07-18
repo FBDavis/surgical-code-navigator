@@ -132,7 +132,16 @@ const Index = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard onTabChange={handleTabChange} />;
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-0 pb-20 md:pb-6">
+              <Dashboard onTabChange={handleTabChange} />
+            </div>
+          </div>
+        );
       case 'newcase':
         return (
           <div className="min-h-screen">
