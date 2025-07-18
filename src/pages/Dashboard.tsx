@@ -19,9 +19,13 @@ import {
   LogOut,
   User,
   Clock,
-  Activity
+  Activity,
+  GraduationCap,
+  BookOpen
 } from 'lucide-react';
 import { TutorialTooltip } from '@/components/TutorialTooltip';
+import { TutorialHub, useTutorial, TutorialTrigger } from '@/components/TutorialManager';
+import { basicNavigationTutorial, codeSearchTutorial, onboardingSequence } from '@/components/TutorialDefinitions';
 import { SpecialtyBranding } from '@/components/SpecialtyBranding';
 import { dashboardTutorial, generalTips } from '@/components/TutorialData';
 
@@ -33,10 +37,24 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  const [showTutorialHub, setShowTutorialHub] = useState(false);
+  const { completedTutorials, startTutorial } = useTutorial();
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // Check if this is a new user and show tutorial hub
+    const hasSeenOnboarding = localStorage.getItem(`onboarding-seen-${user?.id}`);
+    const isNewUser = !hasSeenOnboarding && user && completedTutorials.length === 0;
+    
+    if (isNewUser) {
+      // Delay to allow UI to settle
+      setTimeout(() => {
+        setShowTutorialHub(true);
+        localStorage.setItem(`onboarding-seen-${user.id}`, 'true');
+      }, 1000);
+    }
+  }, [user, completedTutorials]);
 
   // Mock data for demonstration
   const totalSearches = 1247;
@@ -83,7 +101,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 dashboard-main">
       {/* Header */}
       <div className="bg-card/50 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
         <div className="p-3 md:p-6">
@@ -129,11 +147,29 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
 
       <div className="p-3 md:p-6 space-y-6 md:space-y-8 pb-20 md:pb-6">
         {/* Quick Actions - Mobile Priority */}
-        <div className="block md:hidden">
-          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
-            Quick Actions
-          </h2>
+        <div className="block md:hidden quick-actions">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
+              Quick Actions
+            </h2>
+            <div className="flex gap-2">
+              <TutorialTrigger 
+                tutorial={basicNavigationTutorial} 
+                variant="icon"
+                className="h-8 w-8"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTutorialHub(true)}
+                className="h-8 px-3 text-xs"
+              >
+                <GraduationCap className="w-3 h-3 mr-1" />
+                Tutorials
+              </Button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleNavigation('search')}
@@ -162,6 +198,28 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
 
         {/* Main Feature Cards - Desktop Priority */}
         <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-3 flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-foreground">Features</h2>
+            <div className="flex gap-2">
+              <TutorialTrigger 
+                tutorial={basicNavigationTutorial}
+                variant="button"
+                className="h-9"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Quick Tour
+              </TutorialTrigger>
+              <Button
+                variant="outline"
+                onClick={() => setShowTutorialHub(true)}
+                className="h-9"
+              >
+                <GraduationCap className="w-4 h-4 mr-2" />
+                All Tutorials
+              </Button>
+            </div>
+          </div>
+          
           <HomeCard
             title="Find Codes"
             description="Search for CPT codes using procedure descriptions or keywords"
@@ -314,6 +372,12 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
           </Card>
         </div>
       </div>
+
+      {/* Tutorial Hub Modal */}
+      <TutorialHub 
+        isOpen={showTutorialHub} 
+        onClose={() => setShowTutorialHub(false)} 
+      />
     </div>
   );
 };
