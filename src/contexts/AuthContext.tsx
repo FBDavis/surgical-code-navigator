@@ -22,11 +22,20 @@ interface Profile {
   updated_at: string;
 }
 
+interface SubscriptionStatus {
+  subscribed: boolean;
+  subscription_tier?: string;
+  subscription_end?: string;
+  free_months_remaining?: number;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  subscriptionStatus: SubscriptionStatus | null;
+  checkSubscription: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, displayName?: string, specialty?: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
@@ -48,6 +57,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+
+  const checkSubscription = async () => {
+    if (!session) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) {
+        console.error('Error checking subscription:', error);
+        return;
+      }
+      
+      // Also get free months remaining from subscribers table
+      const { data: subscriberData } = await supabase
+        .from('subscribers')
+        .select('free_months_remaining')
+        .eq('user_id', user?.id)
+        .single();
+      
+      setSubscriptionStatus({
+        ...data,
+        free_months_remaining: subscriberData?.free_months_remaining || 0
+      });
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -106,6 +142,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } else {
             setProfile(null);
+            setSubscriptionStatus(null);
+          }
+          
+          // Check subscription status when user logs in
+          if (session?.user) {
+            setTimeout(() => {
+              checkSubscription();
+            }, 0);
           }
         }
       }
@@ -196,6 +240,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     profile,
     loading,
+    subscriptionStatus,
+    checkSubscription,
     signIn,
     signUp,
     signOut,
