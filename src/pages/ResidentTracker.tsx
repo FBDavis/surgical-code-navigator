@@ -11,7 +11,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { CalendarIcon, Download, Plus, Trash2, CheckCircle, Clock, User } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CalendarIcon, Download, Plus, Trash2, CheckCircle, Clock, User, AlertTriangle, ThumbsUp, ThumbsDown, Edit, Sparkles, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +34,19 @@ interface CaseRequirement {
   max_allowed?: number;
   description: string;
   cpt_codes: string[];
+  ai_generated?: boolean;
+  confidence_level?: number;
+  source?: string;
+  needs_review?: boolean;
+  user_feedback_count?: number;
+}
+
+interface RequirementFeedback {
+  id: string;
+  feedback_type: 'correction' | 'verification' | 'addition' | 'deletion';
+  description: string;
+  suggested_value?: any;
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 interface ResidentCase {
@@ -53,6 +67,17 @@ const ResidentTracker = () => {
   const [requirements, setRequirements] = useState<CaseRequirement[]>([]);
   const [residentCases, setResidentCases] = useState<ResidentCase[]>([]);
   const [isAddingCase, setIsAddingCase] = useState(false);
+  const [isGeneratingData, setIsGeneratingData] = useState(false);
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
+  const [selectedRequirement, setSelectedRequirement] = useState<CaseRequirement | null>(null);
+  const [feedbackForm, setFeedbackForm] = useState({
+    type: 'correction' as const,
+    description: '',
+    suggested_min: '',
+    suggested_max: '',
+    suggested_description: '',
+    suggested_cpt_codes: ''
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newCase, setNewCase] = useState({
@@ -228,6 +253,125 @@ const ResidentTracker = () => {
     });
   };
 
+  const generateACGMEData = async () => {
+    if (!selectedSpecialty) return;
+    
+    const selectedSpec = specialties.find(s => s.id === selectedSpecialty);
+    if (!selectedSpec) return;
+
+    setIsGeneratingData(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('gather-acgme-data', {
+        body: {
+          specialty_id: selectedSpecialty,
+          specialty_name: selectedSpec.name
+        }
+      });
+
+      if (error) {
+        console.error('Error generating ACGME data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to generate ACGME data. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "ACGME Data Generated",
+        description: `Generated ${data.requirements_generated} case requirements using AI. Please review for accuracy.`,
+      });
+
+      // Reload requirements to show new data
+      loadRequirements();
+
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while generating data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingData(false);
+    }
+  };
+
+  const submitFeedback = async () => {
+    if (!user || !selectedRequirement) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to submit feedback.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const suggestedValue = {
+        min_required: feedbackForm.suggested_min ? parseInt(feedbackForm.suggested_min) : selectedRequirement.min_required,
+        max_allowed: feedbackForm.suggested_max ? parseInt(feedbackForm.suggested_max) : selectedRequirement.max_allowed,
+        description: feedbackForm.suggested_description || selectedRequirement.description,
+        cpt_codes: feedbackForm.suggested_cpt_codes ? feedbackForm.suggested_cpt_codes.split(',').map(c => c.trim()) : selectedRequirement.cpt_codes
+      };
+
+      const { data, error } = await supabase.functions.invoke('submit-requirement-feedback', {
+        body: {
+          requirement_id: selectedRequirement.id,
+          feedback_type: feedbackForm.type,
+          original_value: {
+            min_required: selectedRequirement.min_required,
+            max_allowed: selectedRequirement.max_allowed,
+            description: selectedRequirement.description,
+            cpt_codes: selectedRequirement.cpt_codes
+          },
+          suggested_value: suggestedValue,
+          description: feedbackForm.description
+        }
+      });
+
+      if (error) {
+        console.error('Error submitting feedback:', error);
+        toast({
+          title: "Error",
+          description: "Failed to submit feedback. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Feedback Submitted",
+        description: "Thank you for helping improve ACGME data accuracy!",
+      });
+
+      // Reset form and close dialog
+      setFeedbackForm({
+        type: 'correction',
+        description: '',
+        suggested_min: '',
+        suggested_max: '',
+        suggested_description: '',
+        suggested_cpt_codes: ''
+      });
+      setIsFeedbackDialogOpen(false);
+      setSelectedRequirement(null);
+
+      // Reload requirements to show updated feedback count
+      loadRequirements();
+
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while submitting feedback.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -294,44 +438,122 @@ const ResidentTracker = () => {
       {/* Requirements Progress */}
       {selectedSpecialty && (
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Case Requirements Progress</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {requirements.map((requirement) => {
-              const progress = calculateProgress(requirement);
-              return (
-                <div key={requirement.id} className="p-4 border rounded-lg">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{requirement.category}</h3>
-                        {requirement.subcategory && (
-                          <p className="text-sm text-muted-foreground">
-                            {requirement.subcategory}
-                          </p>
-                        )}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Case Requirements Progress</h2>
+            <div className="flex gap-2">
+              <Button 
+                onClick={generateACGMEData} 
+                disabled={isGeneratingData}
+                variant="outline"
+              >
+                {isGeneratingData ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                {isGeneratingData ? 'Generating...' : 'Generate ACGME Data'}
+              </Button>
+            </div>
+          </div>
+
+          {requirements.length === 0 ? (
+            <div className="text-center py-8">
+              <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No Requirements Found</h3>
+              <p className="text-muted-foreground mb-4">
+                Use AI to generate ACGME case requirements for this specialty
+              </p>
+              <Button onClick={generateACGMEData} disabled={isGeneratingData}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate ACGME Data
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {requirements.map((requirement) => {
+                const progress = calculateProgress(requirement);
+                return (
+                  <div key={requirement.id} className="p-4 border rounded-lg relative">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium">{requirement.category}</h3>
+                            {requirement.ai_generated && (
+                              <Badge variant="outline" className="text-xs bg-blue-50">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                AI Generated
+                              </Badge>
+                            )}
+                            {requirement.needs_review && (
+                              <Badge variant="outline" className="text-xs bg-yellow-50">
+                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                Needs Review
+                              </Badge>
+                            )}
+                          </div>
+                          {requirement.subcategory && (
+                            <p className="text-sm text-muted-foreground">
+                              {requirement.subcategory}
+                            </p>
+                          )}
+                          {requirement.confidence_level && (
+                            <p className="text-xs text-muted-foreground">
+                              Confidence: {Math.round(requirement.confidence_level * 100)}%
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={progress.current >= progress.required ? 'default' : 'secondary'}
+                          >
+                            {progress.current}/{progress.required}
+                          </Badge>
+                          {user && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedRequirement(requirement);
+                                setFeedbackForm({
+                                  type: 'correction',
+                                  description: '',
+                                  suggested_min: requirement.min_required.toString(),
+                                  suggested_max: requirement.max_allowed?.toString() || '',
+                                  suggested_description: requirement.description,
+                                  suggested_cpt_codes: requirement.cpt_codes.join(', ')
+                                });
+                                setIsFeedbackDialogOpen(true);
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <Badge 
-                        variant={progress.current >= progress.required ? 'default' : 'secondary'}
-                      >
-                        {progress.current}/{progress.required}
-                      </Badge>
-                    </div>
-                    <Progress value={progress.percentage} className="h-2" />
-                    <p className="text-xs text-muted-foreground">
-                      {requirement.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {requirement.cpt_codes.map((code) => (
-                        <Badge key={code} variant="outline" className="text-xs">
-                          {code}
-                        </Badge>
-                      ))}
+                      <Progress value={progress.percentage} className="h-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {requirement.description}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {requirement.cpt_codes.map((code) => (
+                          <Badge key={code} variant="outline" className="text-xs">
+                            {code}
+                          </Badge>
+                        ))}
+                      </div>
+                      {requirement.user_feedback_count && requirement.user_feedback_count > 0 && (
+                        <p className="text-xs text-blue-600">
+                          {requirement.user_feedback_count} user feedback(s) submitted
+                        </p>
+                      )}
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
       )}
 
@@ -480,6 +702,108 @@ const ResidentTracker = () => {
           ))}
         </div>
       </Card>
+
+      {/* Feedback Dialog */}
+      <Dialog open={isFeedbackDialogOpen} onOpenChange={setIsFeedbackDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Submit Feedback for ACGME Requirement</DialogTitle>
+          </DialogHeader>
+          {selectedRequirement && (
+            <div className="space-y-4">
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Help improve ACGME data accuracy by providing feedback on this requirement: 
+                  <strong> {selectedRequirement.category}</strong>
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2">
+                <Label>Feedback Type</Label>
+                <Select 
+                  value={feedbackForm.type} 
+                  onValueChange={(value: any) => setFeedbackForm({ ...feedbackForm, type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="correction">Correction - Fix incorrect data</SelectItem>
+                    <SelectItem value="verification">Verification - Confirm accuracy</SelectItem>
+                    <SelectItem value="addition">Addition - Add missing information</SelectItem>
+                    <SelectItem value="deletion">Deletion - Remove incorrect requirement</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Minimum Cases Required</Label>
+                  <Input
+                    type="number"
+                    value={feedbackForm.suggested_min}
+                    onChange={(e) => setFeedbackForm({ ...feedbackForm, suggested_min: e.target.value })}
+                    placeholder="e.g., 200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Maximum Cases (Optional)</Label>
+                  <Input
+                    type="number"
+                    value={feedbackForm.suggested_max}
+                    onChange={(e) => setFeedbackForm({ ...feedbackForm, suggested_max: e.target.value })}
+                    placeholder="e.g., 300"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={feedbackForm.suggested_description}
+                  onChange={(e) => setFeedbackForm({ ...feedbackForm, suggested_description: e.target.value })}
+                  placeholder="Describe the requirement..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>CPT Codes (comma-separated)</Label>
+                <Input
+                  value={feedbackForm.suggested_cpt_codes}
+                  onChange={(e) => setFeedbackForm({ ...feedbackForm, suggested_cpt_codes: e.target.value })}
+                  placeholder="e.g., 47562, 47563, 44970"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Feedback Description</Label>
+                <Textarea
+                  value={feedbackForm.description}
+                  onChange={(e) => setFeedbackForm({ ...feedbackForm, description: e.target.value })}
+                  placeholder="Explain your feedback and provide sources if possible..."
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsFeedbackDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={submitFeedback}
+                  disabled={!feedbackForm.description.trim()}
+                >
+                  Submit Feedback
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

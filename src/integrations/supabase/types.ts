@@ -103,42 +103,113 @@ export type Database = {
           },
         ]
       }
+      case_requirement_feedback: {
+        Row: {
+          created_at: string
+          description: string | null
+          feedback_type: string
+          id: string
+          original_value: Json | null
+          requirement_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          suggested_value: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          feedback_type: string
+          id?: string
+          original_value?: Json | null
+          requirement_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          suggested_value?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          feedback_type?: string
+          id?: string
+          original_value?: Json | null
+          requirement_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          suggested_value?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_requirement_feedback_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "case_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       case_requirements: {
         Row: {
+          ai_generated: boolean | null
           category: string
+          confidence_level: number | null
           cpt_codes: string[] | null
           created_at: string
           description: string | null
           id: string
+          last_reviewed_at: string | null
           max_allowed: number | null
           min_required: number
+          needs_review: boolean | null
+          source: string | null
           specialty_id: string
           subcategory: string | null
           updated_at: string
+          user_feedback_count: number | null
         }
         Insert: {
+          ai_generated?: boolean | null
           category: string
+          confidence_level?: number | null
           cpt_codes?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
+          last_reviewed_at?: string | null
           max_allowed?: number | null
           min_required?: number
+          needs_review?: boolean | null
+          source?: string | null
           specialty_id: string
           subcategory?: string | null
           updated_at?: string
+          user_feedback_count?: number | null
         }
         Update: {
+          ai_generated?: boolean | null
           category?: string
+          confidence_level?: number | null
           cpt_codes?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
+          last_reviewed_at?: string | null
           max_allowed?: number | null
           min_required?: number
+          needs_review?: boolean | null
+          source?: string | null
           specialty_id?: string
           subcategory?: string | null
           updated_at?: string
+          user_feedback_count?: number | null
         }
         Relationships: [
           {
