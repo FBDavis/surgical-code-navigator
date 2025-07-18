@@ -53,6 +53,8 @@ const ResidentTracker = () => {
   const [requirements, setRequirements] = useState<CaseRequirement[]>([]);
   const [residentCases, setResidentCases] = useState<ResidentCase[]>([]);
   const [isAddingCase, setIsAddingCase] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [newCase, setNewCase] = useState({
     case_date: new Date(),
     case_name: '',
@@ -75,19 +77,30 @@ const ResidentTracker = () => {
   }, [selectedSpecialty]);
 
   const loadSpecialties = async () => {
-    const { data, error } = await supabase
-      .from('surgical_specialties')
-      .select('*')
-      .order('name');
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase
+        .from('surgical_specialties')
+        .select('*')
+        .order('name');
 
-    if (error) {
-      console.error('Error loading specialties:', error);
-      return;
-    }
+      if (error) {
+        console.error('Error loading specialties:', error);
+        setError('Failed to load specialties. Please try refreshing the page.');
+        return;
+      }
 
-    setSpecialties(data || []);
-    if (data && data.length > 0) {
-      setSelectedSpecialty(data[0].id);
+      setSpecialties(data || []);
+      if (data && data.length > 0) {
+        setSelectedSpecialty(data[0].id);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -215,6 +228,30 @@ const ResidentTracker = () => {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading resident tracker...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -222,6 +259,11 @@ const ResidentTracker = () => {
           <h1 className="text-3xl font-bold">Resident & Fellow Case Tracker</h1>
           <p className="text-muted-foreground">
             Track your surgical cases and monitor progress toward specialty requirements
+            {!user && (
+              <span className="block text-sm text-orange-600 mt-1">
+                Note: Sign in to save and track your cases permanently
+              </span>
+            )}
           </p>
         </div>
         <Button onClick={generateReport} variant="outline">
