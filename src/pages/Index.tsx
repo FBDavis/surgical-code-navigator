@@ -54,6 +54,8 @@ const Index = () => {
       setActiveTab('camera');
     } else if (path === '/settings') {
       setActiveTab('settings');
+    } else if (path === '/subscription') {
+      setActiveTab('subscription');
     } else if (path === '/') {
       // For root path, redirect to dashboard to ensure proper navigation
       if (!loading) {
@@ -94,6 +96,9 @@ const Index = () => {
         break;
       case 'resident':
         route = '/resident-tracker';
+        break;
+      case 'subscription':
+        route = '/subscription';
         break;
       case 'settings':
         route = '/settings';
