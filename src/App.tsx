@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import { Subscription } from "./pages/Subscription";
+import { GamificationHub } from "./components/GamificationHub";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/resident-tracker" element={<Index />} />
               <Route path="/settings" element={<Index />} />
               <Route path="/subscription" element={<Subscription />} />
+              <Route path="/gamification" element={<GamificationHub />} />
               <Route path="/auth" element={<Auth />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

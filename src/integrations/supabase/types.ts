@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievement_types: {
+        Row: {
+          category: string | null
+          created_at: string
+          criteria: Json | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          rarity: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          criteria?: Json | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          rarity?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          criteria?: Json | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          rarity?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -266,6 +299,30 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_discoveries: {
+        Row: {
+          created_at: string
+          discovered_user_id: string
+          discovery_method: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discovered_user_id: string
+          discovery_method?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discovered_user_id?: string
+          discovery_method?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -316,6 +373,113 @@ export type Database = {
           id?: string
           name?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      friend_group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friend_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "friend_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      friend_groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          group_code: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          group_code?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          group_code?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      leaderboard_entries: {
+        Row: {
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          period_type: string
+          rank_position: number | null
+          specialty_breakdown: Json | null
+          total_cases: number | null
+          total_rvu: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          period_type: string
+          rank_position?: number | null
+          specialty_breakdown?: Json | null
+          total_cases?: number | null
+          total_rvu?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          rank_position?: number | null
+          specialty_breakdown?: Json | null
+          total_cases?: number | null
+          total_rvu?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -751,6 +915,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_type_id: string
+          ai_generated: boolean | null
+          earned_at: string
+          id: string
+          metadata: Json | null
+          user_id: string
+          week_earned: string | null
+        }
+        Insert: {
+          achievement_type_id: string
+          ai_generated?: boolean | null
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+          week_earned?: string | null
+        }
+        Update: {
+          achievement_type_id?: string
+          ai_generated?: boolean | null
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+          week_earned?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_type_id_fkey"
+            columns: ["achievement_type_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -769,6 +971,39 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_assessments: {
+        Row: {
+          ai_insights: string | null
+          assessment_data: Json
+          created_at: string
+          funny_awards: Json | null
+          id: string
+          user_id: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          ai_insights?: string | null
+          assessment_data: Json
+          created_at?: string
+          funny_awards?: Json | null
+          id?: string
+          user_id: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          ai_insights?: string | null
+          assessment_data?: Json
+          created_at?: string
+          funny_awards?: Json | null
+          id?: string
+          user_id?: string
+          week_end?: string
+          week_start?: string
         }
         Relationships: []
       }
