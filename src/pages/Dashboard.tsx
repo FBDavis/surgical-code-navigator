@@ -115,28 +115,28 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 dashboard-main">
       {/* Header */}
       <div className="bg-card/50 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
-        <div className="p-3 md:p-6">
+        <div className="p-4 md:p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex items-center space-x-3 md:space-x-4 min-w-0">
+            <div className="flex items-center space-x-3 md:space-x-4 min-w-0 flex-1">
               <div className="p-2 bg-primary rounded-lg flex-shrink-0">
                 <Stethoscope className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start flex-col md:flex-row md:items-center gap-1 md:gap-2">
-                  <h1 className="text-lg md:text-2xl font-bold text-foreground leading-tight">
-                    Welcome, {profile?.display_name || user?.email?.split('@')[0] || 'Doctor'}! 👋
+                  <h1 className="text-base md:text-2xl font-bold text-foreground leading-tight truncate">
+                    Welcome, {(profile?.display_name || user?.email?.split('@')[0] || 'Doctor').slice(0, 15)}! 👋
                   </h1>
                   <div className="md:hidden">
                     <TutorialTooltip {...dashboardTutorial} />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm md:text-base text-muted-foreground">Your intelligent coding companion</p>
+                  <p className="text-xs md:text-base text-muted-foreground">Your intelligent coding companion</p>
                   <SpecialtyBranding />
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between md:justify-end space-x-2">
+            <div className="flex items-center justify-end space-x-2 flex-shrink-0">
               <div className="hidden md:flex items-center space-x-2">
                 <TutorialTooltip 
                   {...generalTips} 
@@ -147,8 +147,8 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                   Profile
                 </Button>
               </div>
-              <Button variant="outline" size="sm" onClick={() => signOut()} className="md:ml-2">
-                <LogOut className="w-4 h-4 md:mr-2" />
+              <Button variant="outline" size="sm" onClick={() => signOut()}>
+                <LogOut className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                 <span className="hidden md:inline">Sign Out</span>
               </Button>
             </div>
@@ -156,45 +156,45 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
         </div>
       </div>
 
-      <div className="p-3 md:p-6 space-y-6 md:space-y-8 pb-20 md:pb-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-8 pb-24 md:pb-6">
         {/* Quick Actions - Mobile Priority */}
         <div className="block md:hidden quick-actions">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
+            <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+              <Activity className="w-4 h-4 text-primary" />
               Quick Actions
             </h2>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <TutorialTrigger 
                 tutorial={basicNavigationTutorial} 
                 variant="icon"
-                className="h-8 w-8"
+                className="h-7 w-7"
               />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowTutorialHub(true)}
-                className="h-8 px-3 text-xs"
+                className="h-7 px-2 text-xs"
               >
                 <GraduationCap className="w-3 h-3 mr-1" />
-                Tutorials
+                Tips
               </Button>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleNavigation('search')}
-              className="h-20 flex-col gap-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg touch-manipulation"
+              className="h-18 flex-col gap-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg touch-manipulation px-2"
             >
-              <Search className="w-6 h-6" />
-              <span className="font-medium text-sm">Find Codes</span>
+              <Search className="w-5 h-5" />
+              <span className="font-medium text-xs">Find Codes</span>
             </Button>
             <Button
               onClick={() => handleNavigation('newcase')}
-              className="h-20 flex-col gap-2 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg touch-manipulation"
+              className="h-18 flex-col gap-2 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg touch-manipulation px-2"
             >
-              <FileText className="w-6 h-6" />
-              <span className="font-medium text-sm">New Case</span>
+              <FileText className="w-5 h-5" />
+              <span className="font-medium text-xs">New Case</span>
             </Button>
           </div>
         </div>
@@ -276,12 +276,12 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
 
         {/* Mobile: Simplified Feature Grid */}
         <div className="block md:hidden">
-          <h2 className="text-lg font-semibold text-foreground mb-3">More Features</h2>
+          <h2 className="text-base font-semibold text-foreground mb-3">More Features</h2>
           <div className="grid grid-cols-1 gap-3">
             <div className="grid grid-cols-2 gap-3">
               <HomeCard
-                title="Common Procedures"
-                description="Your most used codes"
+                title="Common"
+                description="Most used codes"
                 icon={History}
                 onClick={() => {}}
                 count={commonProcedures}
@@ -290,7 +290,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
               
               <HomeCard
                 title="Analytics"
-                description="RVU analytics"
+                description="RVU tracking"
                 icon={BarChart3}
                 onClick={() => handleNavigation('analytics')}
                 gradient="from-orange-500/20 to-orange-600/5"
@@ -300,7 +300,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             <div className="grid grid-cols-2 gap-3">
               <HomeCard
                 title="Procedures"
-                description="Total this month"
+                description="This month"
                 icon={FileText}
                 onClick={() => {}}
                 count={thisMonth}
@@ -309,7 +309,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
               
               <HomeCard
                 title="Settings"
-                description="Configure app"
+                description="App config"
                 icon={Settings}
                 onClick={() => handleNavigation('settings')}
                 gradient="from-slate-500/20 to-slate-600/5"
