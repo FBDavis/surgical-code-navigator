@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, Camera, MessageSquare } from 'lucide-react';
+import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, Camera, MessageSquare, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -19,6 +19,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'search', label: 'Find Codes', icon: Search },
     { id: 'camera', label: 'Schedule Scanner', icon: Camera },
     { id: 'messages', label: 'Messages', icon: MessageSquare },
+    { id: 'resident', label: 'Resident Tracker', icon: GraduationCap },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];

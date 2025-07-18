@@ -103,6 +103,53 @@ export type Database = {
           },
         ]
       }
+      case_requirements: {
+        Row: {
+          category: string
+          cpt_codes: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          max_allowed: number | null
+          min_required: number
+          specialty_id: string
+          subcategory: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          cpt_codes?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_allowed?: number | null
+          min_required?: number
+          specialty_id: string
+          subcategory?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cpt_codes?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_allowed?: number | null
+          min_required?: number
+          specialty_id?: string
+          subcategory?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_requirements_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "surgical_specialties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cases: {
         Row: {
           case_name: string
@@ -307,6 +354,106 @@ export type Database = {
           specialty_theme?: Json | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      resident_cases: {
+        Row: {
+          case_date: string
+          case_id: string | null
+          case_name: string
+          created_at: string
+          id: string
+          notes: string | null
+          primary_cpt_code: string | null
+          requirement_id: string | null
+          role: string | null
+          specialty_id: string
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+          verified_by: string | null
+        }
+        Insert: {
+          case_date: string
+          case_id?: string | null
+          case_name: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          primary_cpt_code?: string | null
+          requirement_id?: string | null
+          role?: string | null
+          specialty_id: string
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+          verified_by?: string | null
+        }
+        Update: {
+          case_date?: string
+          case_id?: string | null
+          case_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          primary_cpt_code?: string | null
+          requirement_id?: string | null
+          role?: string | null
+          specialty_id?: string
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_cases_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_cases_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "case_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_cases_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "surgical_specialties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      surgical_specialties: {
+        Row: {
+          abbreviation: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          abbreviation?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          abbreviation?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }

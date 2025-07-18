@@ -25,6 +25,7 @@ const App = () => (
             <Route path="/search-codes" element={<Index />} />
             <Route path="/camera-schedule" element={<Index />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/resident-tracker" element={<Index />} />
             <Route path="/settings" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

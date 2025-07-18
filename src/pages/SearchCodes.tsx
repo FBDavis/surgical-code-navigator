@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DictationCard } from '@/components/DictationCard';
 import { CPTCodeCard } from '@/components/CPTCodeCard';
 import { ChatInterface } from '@/components/ChatInterface';
+import { AddOnCodeFeedback } from '@/components/AddOnCodeFeedback';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ export const SearchCodes = () => {
   const [dictationSuggestions, setDictationSuggestions] = useState<any>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isAnalyzingDictation, setIsAnalyzingDictation] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   // Mock CPT codes for demonstration
@@ -215,6 +217,10 @@ export const SearchCodes = () => {
     }
   };
 
+  const handleCodeFeedback = (feedback: any) => {
+    setFeedbackSubmitted({ ...feedbackSubmitted, [feedback.codeIndex]: true });
+  };
+
   const totalRVUs = selectedCodes.reduce((sum, code) => sum + code.rvu, 0);
 
   return (
@@ -310,24 +316,11 @@ export const SearchCodes = () => {
             ))}
 
             {dictationSuggestions.additionalCodes?.length > 0 && (
-              <div className="mt-6">
-                <h3 className="font-medium text-foreground mb-3">💡 Additional Billable Procedures</h3>
-                <div className="space-y-2">
-                  {dictationSuggestions.additionalCodes.map((code: any, index: number) => (
-                    <div key={index} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200/50">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium text-blue-600">{code.code} - {code.description}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{code.justification}</div>
-                        </div>
-                        <Badge variant="outline" className="text-blue-600 border-blue-200">
-                          {code.rvu} RVU
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <AddOnCodeFeedback
+                additionalCodes={dictationSuggestions.additionalCodes}
+                primaryCodes={primaryCodes.map(c => c.code)}
+                onFeedbackSubmit={handleCodeFeedback}
+              />
             )}
 
             <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200/50">

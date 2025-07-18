@@ -6,6 +6,7 @@ import { SearchCodes } from './SearchCodes';
 import { NewCase } from './NewCase';
 import CameraSchedule from './CameraSchedule';
 import { Settings } from './Settings';
+import ResidentTracker from './ResidentTracker';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
@@ -91,6 +92,9 @@ const Index = () => {
       case 'messages':
         route = '/messages';
         break;
+      case 'resident':
+        route = '/resident-tracker';
+        break;
       case 'settings':
         route = '/settings';
         break;
@@ -152,6 +156,17 @@ const Index = () => {
             </div>
             <div className="md:ml-64 p-6">
               <CameraSchedule />
+            </div>
+          </div>
+        );
+      case 'resident':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-6">
+              <ResidentTracker />
             </div>
           </div>
         );
