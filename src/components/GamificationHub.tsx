@@ -11,6 +11,7 @@ import { Leaderboards } from './gamification/Leaderboards';
 import { Achievements } from './gamification/Achievements';
 import { WeeklyAssessment } from './gamification/WeeklyAssessment';
 import { SocialDiscovery } from './gamification/SocialDiscovery';
+import { InsightsDashboard } from './gamification/InsightsDashboard';
 import { useToast } from '@/hooks/use-toast';
 
 export const GamificationHub = () => {
@@ -208,8 +209,12 @@ export const GamificationHub = () => {
       )}
 
       {/* Main Tabs */}
-      <Tabs defaultValue="groups" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs defaultValue="insights" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="insights" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            AI Insights
+          </TabsTrigger>
           <TabsTrigger value="groups" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Friend Groups
@@ -228,9 +233,13 @@ export const GamificationHub = () => {
           </TabsTrigger>
           <TabsTrigger value="discover" className="flex items-center gap-2">
             <Award className="h-4 w-4" />
-            Discover
+            Smart Social
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="insights">
+          <InsightsDashboard onStatsUpdate={loadGamificationStats} />
+        </TabsContent>
 
         <TabsContent value="groups">
           <FriendGroups onStatsUpdate={loadGamificationStats} />
