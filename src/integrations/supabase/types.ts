@@ -416,6 +416,95 @@ export type Database = {
           },
         ]
       }
+      referral_rewards: {
+        Row: {
+          applied: boolean | null
+          applied_at: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          referral_id: string
+          reward_type: string | null
+          reward_value: number | null
+          user_id: string
+        }
+        Insert: {
+          applied?: boolean | null
+          applied_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          referral_id: string
+          reward_type?: string | null
+          reward_value?: number | null
+          user_id: string
+        }
+        Update: {
+          applied?: boolean | null
+          applied_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          referral_id?: string
+          reward_type?: string | null
+          reward_value?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          conversion_date: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          referral_code: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_email: string
+          referrer_user_id: string
+          reward_granted: boolean | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          conversion_date?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          referral_code: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_email: string
+          referrer_user_id: string
+          reward_granted?: boolean | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          conversion_date?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_email?: string
+          referrer_user_id?: string
+          reward_granted?: boolean | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       resident_cases: {
         Row: {
           case_date: string
@@ -489,6 +578,81 @@ export type Database = {
           },
         ]
       }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          free_months_remaining: number | null
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          trial_end: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          free_months_remaining?: number | null
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          free_months_remaining?: number | null
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      subscription_reminders: {
+        Row: {
+          created_at: string
+          dismissed: boolean | null
+          dismissed_until: string | null
+          id: string
+          last_shown: string | null
+          reminder_type: string
+          shown_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed?: boolean | null
+          dismissed_until?: string | null
+          id?: string
+          last_shown?: string | null
+          reminder_type: string
+          shown_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed?: boolean | null
+          dismissed_until?: string | null
+          id?: string
+          last_shown?: string | null
+          reminder_type?: string
+          shown_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       surgical_specialties: {
         Row: {
           abbreviation: string | null
@@ -542,6 +706,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_referral_reminders: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      generate_referral_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _user_id: string
