@@ -315,47 +315,106 @@ export type Database = {
           },
         ]
       }
+      onboarding_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          preferences_set: boolean | null
+          role_selected: boolean | null
+          specialty_selected: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          preferences_set?: boolean | null
+          role_selected?: boolean | null
+          specialty_selected?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          preferences_set?: boolean | null
+          role_selected?: boolean | null
+          specialty_selected?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          board_certification: string[] | null
           created_at: string
           default_rvu_rate: number | null
           display_name: string | null
           email: string | null
           id: string
+          institution: string | null
           license_number: string | null
+          onboarding_completed: boolean | null
           practice_name: string | null
-          specialty: Database["public"]["Enums"]["medical_specialty"] | null
+          specialty_id: string | null
           specialty_theme: Json | null
+          subspecialty: string | null
           updated_at: string
           user_id: string
+          user_role: string | null
+          year_of_training: number | null
         }
         Insert: {
+          board_certification?: string[] | null
           created_at?: string
           default_rvu_rate?: number | null
           display_name?: string | null
           email?: string | null
           id?: string
+          institution?: string | null
           license_number?: string | null
+          onboarding_completed?: boolean | null
           practice_name?: string | null
-          specialty?: Database["public"]["Enums"]["medical_specialty"] | null
+          specialty_id?: string | null
           specialty_theme?: Json | null
+          subspecialty?: string | null
           updated_at?: string
           user_id: string
+          user_role?: string | null
+          year_of_training?: number | null
         }
         Update: {
+          board_certification?: string[] | null
           created_at?: string
           default_rvu_rate?: number | null
           display_name?: string | null
           email?: string | null
           id?: string
+          institution?: string | null
           license_number?: string | null
+          onboarding_completed?: boolean | null
           practice_name?: string | null
-          specialty?: Database["public"]["Enums"]["medical_specialty"] | null
+          specialty_id?: string | null
           specialty_theme?: Json | null
+          subspecialty?: string | null
           updated_at?: string
           user_id?: string
+          user_role?: string | null
+          year_of_training?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "surgical_specialties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resident_cases: {
         Row: {

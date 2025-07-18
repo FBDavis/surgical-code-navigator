@@ -10,8 +10,14 @@ interface Profile {
   license_number: string | null;
   practice_name: string | null;
   default_rvu_rate: number | null;
-  specialty: string | null;
+  specialty_id: string | null;
   specialty_theme: any;
+  user_role: string | null;
+  subspecialty: string | null;
+  onboarding_completed: boolean;
+  year_of_training: number | null;
+  institution: string | null;
+  board_certification: string[] | null;
   created_at: string;
   updated_at: string;
 }
