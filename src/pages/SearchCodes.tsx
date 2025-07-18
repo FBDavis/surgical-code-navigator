@@ -233,7 +233,12 @@ export const SearchCodes = () => {
       </div>
 
 
-      <DictationCard onSubmit={handleSearch} isProcessing={isProcessing || isAnalyzingDictation} />
+      <DictationCard 
+        onSubmit={handleSearch} 
+        isProcessing={isProcessing || isAnalyzingDictation}
+        selectedCodes={selectedCodes}
+        specialty={profile?.specialty || user?.user_metadata?.specialty}
+      />
 
       {(isProcessing || isAnalyzingDictation) && (
         <Card className="p-6 text-center bg-gradient-card border-medical-accent/10">

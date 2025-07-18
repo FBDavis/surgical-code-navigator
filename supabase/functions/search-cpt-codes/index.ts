@@ -40,23 +40,36 @@ serve(async (req) => {
     
     const primaryPrompt = `You are a medical coding expert specializing in ${specialty ? specialty.replace('_', ' ') : 'general medicine'}. Given this surgical procedure description: "${procedureDescription}"${specialtyContext}
 
-Please identify the PRIMARY CPT codes that would be billable for this specific procedure. For each code, provide:
+Please identify the PRIMARY CPT codes that would be billable for this specific procedure. 
+
+CRITICAL REQUIREMENTS:
+1. Check for CCI (Correct Coding Initiative) bundling rules
+2. Recommend proper modifiers (-59, -51, -RT, -LT, -25, etc.) to prevent denials
+3. Consider laterality requirements (right/left procedures need RT/LT modifiers)
+4. Identify procedures that require -25 modifier for E&M services
+5. Flag potential unbundling opportunities with -59 modifier
+6. Consider Medicare LCD/NCD compliance
+
+For each code, provide:
 1. The CPT code number
-2. A brief description
+2. A brief description  
 3. The current RVU value (approximate if exact not known)
-4. Any relevant modifiers that would maximize billing
+4. Required modifiers with explanations
 5. The category (Surgery, Radiology, etc.)
 6. Position order (1 for primary, 2 for secondary, etc.)
+7. Bundling warnings if applicable
 
 Format your response as a JSON array of objects with this structure:
 {
   "code": "12345",
   "description": "Brief description",
   "rvu": 10.5,
-  "modifiers": ["59", "78"],
+  "modifiers": ["59", "RT"],
   "category": "Surgery",
   "is_primary": true,
-  "position": 1
+  "position": 1,
+  "bundlingWarning": "May bundle with 12346 - use modifier -59 if distinct",
+  "laterality": "required"
 }
 
 Order the results by billing priority and RVU value from highest to lowest.`
@@ -114,34 +127,44 @@ Order the results by billing priority and RVU value from highest to lowest.`
     
     const associatedPrompt = `You are a medical coding expert specializing in ${specialty ? specialty.replace('_', ' ') : 'general medicine'}. Given these PRIMARY CPT codes: ${primaryCodesStr}${specialtyAssociatedContext}
 
-Please identify COMMONLY ASSOCIATED CPT codes that are frequently billed together with these primary procedures. These should be:
-- Complementary procedures often performed at the same time
-- Common add-on procedures
+Please identify COMMONLY ASSOCIATED CPT codes that are frequently billed together with these primary procedures.
 
-For example:
-- Trigger release (26055) often associated with flexor tenosynovectomy (26145)
-- Carpal tunnel release often with additional nerve procedures
-- Joint procedures often with related joint work
+ADVANCED ANALYSIS REQUIRED:
+1. Check CCI bundling rules between primary and associated codes
+2. Identify codes that require modifier -51 (multiple procedures)
+3. Flag codes that may need modifier -59 (distinct procedural service)
+4. Consider anatomical modifiers (RT/LT, F1-F9 for digits)
+5. Evaluate add-on codes (+) that don't require modifier -51
+6. Check for Medicare coverage limitations and LCD requirements
+
+Associated codes should include:
+- Complementary procedures often performed simultaneously
+- Common add-on procedures 
+- Procedures that enhance the primary procedure's value
+- Diagnostic procedures supporting the primary procedure
 
 For each associated code, provide:
 1. The CPT code number
 2. A brief description
 3. The current RVU value
-4. Any relevant modifiers
+4. Required modifiers with explanations
 5. The category
 6. Position order for billing
-7. A brief explanation of WHEN this code would be needed or appropriate to use
+7. Bundling analysis and modifier requirements
+8. When this code is appropriate to bill
 
 Format as JSON array with this structure:
 {
   "code": "12345",
-  "description": "Brief description",
+  "description": "Brief description", 
   "rvu": 5.2,
-  "modifiers": ["59"],
+  "modifiers": ["59", "51"],
   "category": "Surgery",
   "is_primary": false,
   "position": 3,
-  "whenNeeded": "Brief explanation of when this code is appropriate to bill alongside the primary procedure"
+  "whenNeeded": "When this code is appropriate to bill alongside primary procedure",
+  "bundlingAnalysis": "CCI analysis and modifier requirements",
+  "addOnCode": false
 }`
 
     const associatedResponse = await fetch('https://api.openai.com/v1/chat/completions', {

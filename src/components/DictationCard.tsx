@@ -7,16 +7,21 @@ import { cn } from '@/lib/utils';
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { RealTimeAnalyzer } from '@/components/RealTimeAnalyzer';
+import { SmartTemplates } from '@/components/SmartTemplates';
 
 interface DictationCardProps {
   onSubmit: (text: string, type: 'voice' | 'photo' | 'text') => void;
   isProcessing?: boolean;
+  selectedCodes?: any[];
+  specialty?: string;
 }
 
-export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) => {
+export const DictationCard = ({ onSubmit, isProcessing, selectedCodes = [], specialty }: DictationCardProps) => {
   const [text, setText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isCapturingPhoto, setIsCapturingPhoto] = useState(false);
+  const [realtimeAnalysis, setRealtimeAnalysis] = useState<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -197,6 +202,11 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
     }
   };
 
+  const handleInsertTemplate = (templateText: string) => {
+    const newText = text + (text ? '\n\n' : '') + templateText;
+    setText(newText);
+  };
+
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-medical-light border-0 shadow-medical">
       <div className="space-y-4">
@@ -230,6 +240,13 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
             </Button>
           </div>
         </div>
+
+        {/* Smart Templates */}
+        <SmartTemplates 
+          currentText={text}
+          specialty={specialty}
+          onInsertTemplate={handleInsertTemplate}
+        />
         
         <Textarea
           placeholder="Describe the surgical procedure, or use voice/camera input above..."
@@ -257,6 +274,14 @@ export const DictationCard = ({ onSubmit, isProcessing }: DictationCardProps) =>
           accept="image/*,image/heic,image/heif"
           style={{ display: 'none' }}
           capture="environment"
+        />
+
+        {/* Real-time Analysis */}
+        <RealTimeAnalyzer 
+          dictationText={text}
+          selectedCodes={selectedCodes}
+          specialty={specialty}
+          onAnalysisUpdate={setRealtimeAnalysis}
         />
       </div>
     </Card>
