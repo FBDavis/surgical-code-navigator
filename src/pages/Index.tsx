@@ -132,7 +132,7 @@ const Index = () => {
             <div className="Navigation">
               <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            <div className="md:ml-64 p-6">
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
               <NewCase />
             </div>
           </div>
@@ -143,7 +143,7 @@ const Index = () => {
             <div className="Navigation">
               <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            <div className="md:ml-64 p-6">
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
               <SearchCodes />
             </div>
           </div>
@@ -154,7 +154,7 @@ const Index = () => {
             <div className="Navigation">
               <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            <div className="md:ml-64 p-6">
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
               <CameraSchedule />
             </div>
           </div>
@@ -165,7 +165,7 @@ const Index = () => {
             <div className="Navigation">
               <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            <div className="md:ml-64 p-6">
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
               <ResidentTracker />
             </div>
           </div>
@@ -176,10 +176,10 @@ const Index = () => {
             <div className="Navigation">
               <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            <div className="md:ml-64 p-6">
-              <div className="text-center py-12">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Analytics Dashboard</h2>
-                <p className="text-muted-foreground">Detailed RVU analytics and reporting coming soon...</p>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <div className="text-center py-8 md:py-12">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">Analytics Dashboard</h2>
+                <p className="text-sm md:text-base text-muted-foreground">Detailed RVU analytics and reporting coming soon...</p>
               </div>
             </div>
           </div>
@@ -190,7 +190,7 @@ const Index = () => {
             <div className="Navigation">
               <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            <div className="md:ml-64 p-6">
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
               <Settings />
             </div>
           </div>

@@ -86,64 +86,68 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       {/* Header */}
       <div className="bg-card/50 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
-        <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-primary rounded-lg">
-                <Stethoscope className="h-6 w-6 text-primary-foreground" />
+        <div className="p-3 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="flex items-center space-x-3 md:space-x-4 min-w-0">
+              <div className="p-2 bg-primary rounded-lg flex-shrink-0">
+                <Stethoscope className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold text-foreground">
-                    Welcome to OpCoder, {profile?.display_name || user?.email?.split('@')[0] || 'Doctor'}! 👋
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                  <h1 className="text-lg md:text-2xl font-bold text-foreground leading-tight">
+                    Welcome, {profile?.display_name || user?.email?.split('@')[0] || 'Doctor'}! 👋
                   </h1>
-                  <TutorialTooltip {...dashboardTutorial} />
+                  <div className="md:hidden">
+                    <TutorialTooltip {...dashboardTutorial} />
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-muted-foreground">Your intelligent medical coding companion</p>
+                  <p className="text-sm md:text-base text-muted-foreground">Your intelligent coding companion</p>
                   <SpecialtyBranding />
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <TutorialTooltip 
-                {...generalTips} 
-                className="mr-2"
-              />
-              <Button variant="outline" size="sm">
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+            <div className="flex items-center justify-between md:justify-end space-x-2">
+              <div className="hidden md:flex items-center space-x-2">
+                <TutorialTooltip 
+                  {...generalTips} 
+                  className="mr-2"
+                />
+                <Button variant="outline" size="sm">
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </Button>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => signOut()} className="md:ml-2">
+                <LogOut className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Sign Out</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6 space-y-8">
+      <div className="p-3 md:p-6 space-y-6 md:space-y-8 pb-20 md:pb-6">
         {/* Quick Actions - Mobile Priority */}
         <div className="block md:hidden">
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
             <Activity className="w-5 h-5 text-primary" />
             Quick Actions
           </h2>
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleNavigation('search')}
-              className="h-20 flex-col gap-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
+              className="h-20 flex-col gap-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg touch-manipulation"
             >
               <Search className="w-6 h-6" />
-              <span className="font-medium">Find Codes</span>
+              <span className="font-medium text-sm">Find Codes</span>
             </Button>
             <Button
               onClick={() => handleNavigation('newcase')}
-              className="h-20 flex-col gap-2 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
+              className="h-20 flex-col gap-2 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg touch-manipulation"
             >
               <FileText className="w-6 h-6" />
-              <span className="font-medium">New Case</span>
+              <span className="font-medium text-sm">New Case</span>
             </Button>
           </div>
         </div>
@@ -203,24 +207,45 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
 
         {/* Mobile: Simplified Feature Grid */}
         <div className="block md:hidden">
-          <h2 className="text-lg font-semibold text-foreground mb-4">More Features</h2>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <HomeCard
-              title="Common Procedures"
-              description="Your most used codes"
-              icon={History}
-              onClick={() => {}}
-              count={commonProcedures}
-              gradient="from-green-500/20 to-green-600/5"
-            />
+          <h2 className="text-lg font-semibold text-foreground mb-3">More Features</h2>
+          <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <HomeCard
+                title="Common Procedures"
+                description="Your most used codes"
+                icon={History}
+                onClick={() => {}}
+                count={commonProcedures}
+                gradient="from-green-500/20 to-green-600/5"
+              />
+              
+              <HomeCard
+                title="Analytics"
+                description="RVU analytics"
+                icon={BarChart3}
+                onClick={() => handleNavigation('analytics')}
+                gradient="from-orange-500/20 to-orange-600/5"
+              />
+            </div>
             
-            <HomeCard
-              title="Analytics"
-              description="RVU analytics dashboard"
-              icon={BarChart3}
-              onClick={() => handleNavigation('analytics')}
-              gradient="from-orange-500/20 to-orange-600/5"
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <HomeCard
+                title="Procedures"
+                description="Total this month"
+                icon={FileText}
+                onClick={() => {}}
+                count={thisMonth}
+                gradient="from-purple-500/20 to-purple-600/5"
+              />
+              
+              <HomeCard
+                title="Settings"
+                description="Configure app"
+                icon={Settings}
+                onClick={() => handleNavigation('settings')}
+                gradient="from-slate-500/20 to-slate-600/5"
+              />
+            </div>
           </div>
         </div>
 
