@@ -6,7 +6,7 @@ export const SpecialtyBranding = () => {
   
   useEffect(() => {
     // Apply specialty theme colors if available
-    const specialty = profile?.specialty || user?.user_metadata?.specialty;
+    const specialty = profile?.specialty_id || user?.user_metadata?.specialty;
     const theme = profile?.specialty_theme || user?.user_metadata?.specialty_theme;
     
     if (theme && theme.primary_color) {
@@ -46,7 +46,7 @@ export const SpecialtyBranding = () => {
     return names[specialty as keyof typeof names] || "General Medicine";
   };
 
-  const specialty = profile?.specialty || user?.user_metadata?.specialty;
+  const specialty = profile?.specialty_id || user?.user_metadata?.specialty;
   const theme = profile?.specialty_theme || user?.user_metadata?.specialty_theme;
   
   if (!specialty) return null;

@@ -77,7 +77,7 @@ export const SearchCodes = () => {
       const { data, error } = await supabase.functions.invoke('search-cpt-codes', {
         body: { 
           procedureDescription: text,
-          specialty: user?.user_metadata?.specialty || profile?.specialty
+          specialty: user?.user_metadata?.specialty || profile?.specialty_id
         }
       });
 
@@ -229,9 +229,9 @@ export const SearchCodes = () => {
         <Search className="w-6 h-6 text-primary" />
         <div className="flex flex-col">
           <h1 className="text-2xl font-bold text-foreground">Find CPT Codes</h1>
-          {(profile?.specialty || user?.user_metadata?.specialty) && (
+          {(profile?.specialty_id || user?.user_metadata?.specialty) && (
             <div className="text-sm text-muted-foreground">
-              Specialized for {profile?.specialty?.replace('_', ' ') || user?.user_metadata?.specialty?.replace('_', ' ')}
+              Specialized for {profile?.specialty_id || user?.user_metadata?.specialty}
             </div>
           )}
         </div>
@@ -243,7 +243,7 @@ export const SearchCodes = () => {
         onSubmit={handleSearch} 
         isProcessing={isProcessing || isAnalyzingDictation}
         selectedCodes={selectedCodes}
-        specialty={profile?.specialty || user?.user_metadata?.specialty}
+        specialty={profile?.specialty_id || user?.user_metadata?.specialty}
       />
 
       {(isProcessing || isAnalyzingDictation) && (
