@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { SubscriptionManager } from '@/components/SubscriptionManager';
 import { ReferralReminders } from '@/components/ReferralReminders';
+import { ReferralProgress } from '@/components/ReferralProgress';
 import { 
   CheckCircle, 
   Crown, 
@@ -111,6 +112,9 @@ export const Subscription = () => {
 
         {/* Subscription Manager */}
         <SubscriptionManager />
+
+        {/* Referral Progress */}
+        <ReferralProgress />
 
         {/* Features Section */}
         <Card>

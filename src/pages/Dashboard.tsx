@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HomeCard } from '@/components/HomeCard';
 import { StatsOverview } from '@/components/StatsOverview';
+import { FloatingReferralBanner } from '@/components/ReferralNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,10 +35,11 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onTabChange }: DashboardProps) => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, subscriptionStatus } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
   const [showTutorialHub, setShowTutorialHub] = useState(false);
+  const [showReferralBanner, setShowReferralBanner] = useState(false);
   const { completedTutorials, startTutorial } = useTutorial();
 
   useEffect(() => {
@@ -54,7 +56,16 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
         localStorage.setItem(`onboarding-seen-${user.id}`, 'true');
       }, 1000);
     }
-  }, [user, completedTutorials]);
+    
+    // Show referral banner for subscribed users after some interaction
+    if (subscriptionStatus?.subscribed && user) {
+      const timer = setTimeout(() => {
+        setShowReferralBanner(true);
+      }, 45000); // Show after 45 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, completedTutorials, subscriptionStatus]);
 
   // Mock data for demonstration
   const totalSearches = 1247;
@@ -378,6 +389,13 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
         isOpen={showTutorialHub} 
         onClose={() => setShowTutorialHub(false)} 
       />
+
+      {/* Floating Referral Banner for Subscribed Users */}
+      {showReferralBanner && (
+        <FloatingReferralBanner 
+          onDismiss={() => setShowReferralBanner(false)} 
+        />
+      )}
     </div>
   );
 };
