@@ -214,8 +214,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setProfile(null);
-      // Navigate to auth page with proper routing
-      window.location.href = '/auth';
+      // Use hash router compatible navigation
+      window.location.hash = '#/auth';
     }
     return { error };
   };
