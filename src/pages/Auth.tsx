@@ -25,6 +25,7 @@ export default function Auth() {
   const [activeTab, setActiveTab] = useState('signin');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [showUpdatePassword, setShowUpdatePassword] = useState(false);
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -32,9 +33,14 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check for password reset token in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('type') === 'recovery') {
+      setShowUpdatePassword(true);
+    }
+
     if (user) {
       // Check for returnTo parameter to redirect to original destination
-      const urlParams = new URLSearchParams(window.location.search);
       const returnTo = urlParams.get('returnTo');
       
       if (returnTo) {
@@ -160,6 +166,46 @@ export default function Auth() {
     }
   };
 
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      
+      if (error) throw error;
+
+      toast({
+        title: "Password updated successfully!",
+        description: "You can now sign in with your new password.",
+      });
+
+      // Reset form and redirect to sign in
+      setShowUpdatePassword(false);
+      setPassword('');
+      setConfirmPassword('');
+      setActiveTab('signin');
+    } catch (error: any) {
+      console.error('Password update error:', error);
+      setError(error.message || 'An error occurred updating password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGuestAccess = () => {
     navigate('/?guest=true');
   };
@@ -190,11 +236,62 @@ export default function Auth() {
         <Card className="border-medical-accent/20 shadow-medical">
           <CardHeader>
             <CardTitle className="text-center">
-              {showPasswordReset ? 'Reset Password' : 'Secure Medical Access'}
+              {showUpdatePassword ? 'Update Password' : showPasswordReset ? 'Reset Password' : 'Secure Medical Access'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {showPasswordReset ? (
+            {showUpdatePassword ? (
+              <div className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                    <Input
+                      id="confirm-new-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating Password...
+                      </>
+                    ) : (
+                      'Update Password'
+                    )}
+                  </Button>
+                </form>
+              </div>
+            ) : showPasswordReset ? (
               <div className="space-y-4">
                 {error && (
                   <Alert variant="destructive">
