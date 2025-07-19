@@ -9,11 +9,16 @@ interface HomeCardProps {
   onClick: () => void;
   count?: number;
   gradient?: string;
+  tutorialId?: string;
 }
 
-export function HomeCard({ title, description, icon: Icon, onClick, count, gradient = "from-primary/20 to-primary/5" }: HomeCardProps) {
+export function HomeCard({ title, description, icon: Icon, onClick, count, gradient = "from-primary/20 to-primary/5", tutorialId }: HomeCardProps) {
   return (
-    <Card className={`group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-border/50 bg-gradient-to-br ${gradient} hover:shadow-primary/10 touch-manipulation`} onClick={onClick}>
+    <Card 
+      className={`group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-border/50 bg-gradient-to-br ${gradient} hover:shadow-primary/10 touch-manipulation`} 
+      onClick={onClick}
+      data-tutorial={tutorialId}
+    >
       <CardHeader className="pb-2 md:pb-3 p-2 md:p-6">
         <div className="flex items-center justify-between">
           <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors flex-shrink-0">

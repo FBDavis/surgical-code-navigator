@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, Camera, MessageSquare, GraduationCap, Crown, Trophy } from 'lucide-react';
+import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, Camera, MessageSquare, GraduationCap, Crown, Trophy, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTutorial } from '@/components/TutorialManager';
 
 interface NavigationProps {
   activeTab: string;
@@ -12,6 +13,7 @@ interface NavigationProps {
 export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { signOut } = useAuth();
+  const { startTutorial } = useTutorial();
 
   const tabs = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -28,6 +30,108 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
 
   const handleLogout = async () => {
     await signOut();
+  };
+
+  const startAppTutorial = () => {
+    const fullAppTutorial = {
+      id: 'full-app-walkthrough',
+      title: 'Complete App Walkthrough',
+      description: 'A comprehensive tour of all OpCoder features',
+      category: 'workflow' as const,
+      icon: 'app',
+      estimatedTime: 15,
+      steps: [
+        {
+          id: 'welcome',
+          title: 'Welcome to OpCoder!',
+          content: 'This comprehensive tutorial will guide you through all the features of OpCoder, your AI-powered surgical coding assistant.',
+          position: 'center' as const,
+          highlight: 'Take your time with each step to get the most out of this walkthrough.'
+        },
+        {
+          id: 'dashboard-overview',
+          title: 'Dashboard Overview',
+          content: 'This is your main dashboard where you can see your coding statistics, recent activity, and quick access to key features.',
+          element: '.md\\:ml-64',
+          position: 'center' as const,
+          tips: [
+            'View your monthly RVU totals and coding statistics',
+            'See recent activity and case history',
+            'Access quick actions for common tasks'
+          ]
+        },
+        {
+          id: 'navigation-menu',
+          title: 'Navigation Menu',
+          content: 'Use the sidebar (desktop) or bottom navigation (mobile) to navigate between different features.',
+          element: '.md\\:w-64',
+          position: 'right' as const,
+          tips: [
+            'Click any menu item to navigate to that section',
+            'Your current location is highlighted',
+            'Mobile users can access more options via the menu button'
+          ]
+        },
+        {
+          id: 'new-case-intro',
+          title: 'Creating New Cases',
+          content: 'Let\'s explore how to create a new case. Click "New Case" to see the case creation interface.',
+          position: 'center' as const,
+          tips: ['Enter case details like patient MRN and procedure date', 'Use AI to search for relevant CPT codes', 'Add multiple codes to a single case']
+        },
+        {
+          id: 'code-search-intro', 
+          title: 'AI-Powered Code Search',
+          content: 'The Find Codes feature uses AI to help you find the right CPT codes based on procedure descriptions.',
+          position: 'center' as const,
+          tips: ['Describe procedures in detail for better results', 'Use medical terminology when possible', 'Review AI suggestions carefully']
+        },
+        {
+          id: 'schedule-scanner',
+          title: 'Schedule Scanner',
+          content: 'Upload photos of surgery schedules and let AI extract the procedures and suggest appropriate codes.',
+          position: 'center' as const,
+          tips: ['Take clear photos of schedule documents', 'AI will extract procedure information', 'Review and edit extracted data']
+        },
+        {
+          id: 'resident-tracking',
+          title: 'Resident Case Tracking',
+          content: 'For residents and fellows, track your cases against ACGME requirements and monitor your progress.',
+          position: 'center' as const,
+          tips: ['Log cases according to ACGME categories', 'Track progress toward requirements', 'Generate reports for reviews']
+        },
+        {
+          id: 'analytics-overview',
+          title: 'Analytics & Reporting',
+          content: 'View detailed analytics about your coding patterns, RVU trends, and productivity metrics.',
+          position: 'center' as const,
+          tips: ['Monitor monthly RVU totals', 'Track coding efficiency trends', 'Export reports for practice management']
+        },
+        {
+          id: 'settings-tour',
+          title: 'Settings & Customization',
+          content: 'Customize your experience, set default RVU rates, manage your profile, and configure preferences.',
+          position: 'center' as const,
+          tips: ['Set your default RVU compensation rate', 'Customize app preferences', 'Manage account settings']
+        },
+        {
+          id: 'tutorial-complete',
+          title: 'Tutorial Complete!',
+          content: 'You\'ve completed the full OpCoder walkthrough! You can restart this tutorial anytime from the navigation menu.',
+          position: 'center' as const,
+          highlight: 'Remember: You can access individual feature tutorials from the help icons throughout the app.',
+          tips: [
+            'Use the dictation features for faster input',
+            'Review AI suggestions carefully before accepting',
+            'Check your analytics regularly to track progress',
+            'Customize your settings for optimal workflow'
+          ]
+        }
+      ]
+    };
+    
+    startTutorial(fullAppTutorial);
+    setIsMenuOpen(false);
   };
 
   return (
@@ -65,16 +169,29 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
                 </Button>
               );
             })}
-            <div className="border-t pt-2 mt-2">
-              <Button
-                variant="ghost"
-                onClick={handleLogout}
-                className="w-full justify-start h-11 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
-                <span>Logout</span>
-              </Button>
-            </div>
+              
+              {/* Tutorial Button for Mobile */}
+              <div className="border-t pt-2 mt-2">
+                <Button
+                  variant="ghost"
+                  onClick={startAppTutorial}
+                  className="w-full justify-start h-11 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                >
+                  <BookOpen className="w-4 h-4 mr-3 flex-shrink-0" />
+                  <span>Start Tutorial</span>
+                </Button>
+              </div>
+              
+              <div className="border-t pt-2 mt-2">
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="w-full justify-start h-11 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
+                  <span>Logout</span>
+                </Button>
+              </div>
           </div>
         )}
       </div>
@@ -106,6 +223,18 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
                   </Button>
                 );
               })}
+              
+              {/* Tutorial Button */}
+              <div className="border-t pt-2 mt-2">
+                <Button
+                  variant="ghost"
+                  onClick={startAppTutorial}
+                  className="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                >
+                  <BookOpen className="w-5 h-5 mr-3" />
+                  Start Tutorial
+                </Button>
+              </div>
             </nav>
             
             {/* Logout Button at Bottom */}
