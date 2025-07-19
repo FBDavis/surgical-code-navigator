@@ -33,37 +33,34 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for password reset token in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    
-    console.log('URL params:', Object.fromEntries(urlParams));
-    console.log('Hash params:', Object.fromEntries(hashParams));
-    
-    // Check both URL and hash for type=recovery
-    if (urlParams.get('type') === 'recovery' || hashParams.get('type') === 'recovery') {
-      console.log('Password recovery detected, showing update form');
-      setShowUpdatePassword(true);
-      return; // Don't redirect if we're in recovery mode
-    }
-
-    if (user) {
-      // Check for returnTo parameter to redirect to original destination
-      const returnTo = urlParams.get('returnTo');
+    // Handle auth state changes including password recovery
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session);
       
-      if (returnTo) {
-        navigate(decodeURIComponent(returnTo));
-      } else {
-        // Fallback to legacy tab parameter or dashboard
-        const tab = urlParams.get('tab');
-        if (tab) {
-          navigate(`/?tab=${tab}`);
+      if (event === 'PASSWORD_RECOVERY') {
+        setShowUpdatePassword(true);
+        setShowPasswordReset(false);
+        setResetEmailSent(false);
+      } else if (session?.user) {
+        // User is signed in, redirect appropriately
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('returnTo');
+        
+        if (returnTo) {
+          navigate(decodeURIComponent(returnTo));
         } else {
-          navigate('/dashboard');
+          const tab = urlParams.get('tab');
+          if (tab) {
+            navigate(`/?tab=${tab}`);
+          } else {
+            navigate('/dashboard');
+          }
         }
       }
-    }
-  }, [user, navigate]);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
