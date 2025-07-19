@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -261,8 +262,8 @@ export const Subscription = () => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-2">Do you offer discounts for residents?</h3>
-              <p className="text-muted-foreground">Yes! Residents and fellows receive special pricing. Contact our support team for details.</p>
+              <h3 className="font-semibold mb-2">What support is available?</h3>
+              <p className="text-muted-foreground">Premium subscribers get priority support from our medical coding experts, including live chat, email support, and access to our knowledge base with coding guidelines and best practices.</p>
             </div>
           </CardContent>
         </Card>
