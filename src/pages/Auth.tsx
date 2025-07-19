@@ -33,34 +33,31 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Handle auth state changes including password recovery
+    // Simple URL parameter check for recovery mode
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'recovery') {
+      setShowUpdatePassword(true);
+      return;
+    }
+
+    // Handle auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session);
-      
       if (event === 'PASSWORD_RECOVERY') {
         setShowUpdatePassword(true);
         setShowPasswordReset(false);
         setResetEmailSent(false);
-      } else if (session?.user) {
-        // User is signed in, redirect appropriately
-        const urlParams = new URLSearchParams(window.location.search);
-        const returnTo = urlParams.get('returnTo');
-        
+      } else if (session?.user && !showUpdatePassword) {
+        const returnTo = params.get('returnTo');
         if (returnTo) {
           navigate(decodeURIComponent(returnTo));
         } else {
-          const tab = urlParams.get('tab');
-          if (tab) {
-            navigate(`/?tab=${tab}`);
-          } else {
-            navigate('/dashboard');
-          }
+          navigate('/dashboard');
         }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, showUpdatePassword]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +99,7 @@ export default function Auth() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/#/auth?mode=recovery`,
       });
 
       if (error) throw error;
