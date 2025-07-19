@@ -70,12 +70,12 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     }
   }, [user, completedTutorials, subscriptionStatus]);
 
-  // Mock data for demonstration
-  const totalSearches = 1247;
-  const recentSearches = 23;
-  const thisMonth = 156;
-  const totalRVUs = 2847.65;
-  const commonProcedures = 47;
+  // Start with zero data for new accounts
+  const totalSearches = 0;
+  const recentSearches = 0;
+  const thisMonth = 0;
+  const totalRVUs = 0;
+  const commonProcedures = 0;
 
   const handleNavigation = (tab: string) => {
     if (onTabChange) {
@@ -104,17 +104,9 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     navigate('/auth?auth=true');
   };
 
-  const recentCodes = [
-    { code: '47562', description: 'Laparoscopic cholecystectomy', rvu: 10.61, date: '2024-01-10' },
-    { code: '44970', description: 'Laparoscopic appendectomy', rvu: 8.56, date: '2024-01-09' },
-    { code: '49650', description: 'Laparoscopic hernia repair', rvu: 12.33, date: '2024-01-08' },
-  ];
+  const recentCodes: Array<{ code: string; description: string; rvu: number; date: string }> = [];
 
-  const topCodes = [
-    { code: '47562', count: 15, rvu: 10.61 },
-    { code: '49650', count: 12, rvu: 12.33 },
-    { code: '44970', count: 8, rvu: 8.56 },
-  ];
+  const topCodes: Array<{ code: string; count: number; rvu: number }> = [];
 
   if (!mounted) return null;
 

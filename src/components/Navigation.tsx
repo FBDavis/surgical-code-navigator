@@ -139,7 +139,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
       {/* Mobile Header */}
       <div className="md:hidden bg-card border-b border-medical-accent/10 p-3 safe-area-pt">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold text-primary truncate">CPT Surgeon</h1>
+          <h1 className="text-lg font-bold text-primary truncate">OpCoder</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -200,7 +200,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-medical-accent/10">
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center h-16 px-4 bg-gradient-primary">
-            <h1 className="text-xl font-bold text-primary-foreground">CPT Surgeon</h1>
+            <h1 className="text-xl font-bold text-primary-foreground">OpCoder</h1>
           </div>
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <nav className="mt-5 flex-1 px-2 space-y-1">
