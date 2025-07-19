@@ -344,11 +344,70 @@ export const TutorialHub = ({ isOpen, onClose }: TutorialHubProps) => {
   };
 
   const startSelectedTutorials = () => {
-    // For now, start with basics if selected, otherwise first selected feature
+    // Start with the first selected tutorial (prioritizing basics if selected)
     const firstFeature = selectedFeatures.includes('basics') ? 'basics' : selectedFeatures[0];
     if (firstFeature) {
-      // You would implement the actual tutorial starting logic here
-      console.log('Starting tutorials for:', selectedFeatures);
+      // Create and start the appropriate tutorial based on selection
+      const tutorialMap: { [key: string]: any } = {
+        'basics': {
+          id: 'basics',
+          title: 'Basic Navigation',
+          description: 'Learn to navigate the OpCoder app',
+          category: 'basics' as const,
+          icon: 'navigation',
+          estimatedTime: 5,
+          steps: [
+            {
+              id: 'dashboard',
+              title: 'Dashboard Overview',
+              content: 'This is your main dashboard where you can see stats, recent activity, and quick actions.',
+              element: '.md\\:ml-64',
+              position: 'center' as const
+            },
+            {
+              id: 'navigation',
+              title: 'Navigation Menu',
+              content: 'Use the sidebar to navigate between different features like search, new cases, and settings.',
+              element: '.Navigation',
+              position: 'right' as const
+            },
+            {
+              id: 'search',
+              title: 'Code Search',
+              content: 'Click "Find Codes" to search for CPT codes using AI-powered descriptions.',
+              element: '[data-tutorial="search-codes"]',
+              position: 'center' as const
+            }
+          ]
+        },
+        'search': {
+          id: 'search',
+          title: 'Code Search Tutorial',
+          description: 'Learn how to search for CPT codes effectively',
+          category: 'workflow' as const,
+          icon: 'search',
+          estimatedTime: 3,
+          steps: [
+            {
+              id: 'input',
+              title: 'Describe Your Procedure',
+              content: 'Enter a detailed description of the procedure you performed. Be specific about the surgical approach and anatomy involved.',
+              position: 'center' as const
+            },
+            {
+              id: 'results',
+              title: 'Review AI Suggestions',
+              content: 'Our AI will analyze your description and suggest the most relevant CPT codes with RVU values.',
+              position: 'center' as const
+            }
+          ]
+        }
+      };
+
+      const tutorial = tutorialMap[firstFeature];
+      if (tutorial) {
+        startTutorial(tutorial);
+      }
       onClose();
     }
   };

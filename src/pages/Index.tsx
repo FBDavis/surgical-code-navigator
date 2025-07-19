@@ -202,13 +202,13 @@ const Index = () => {
               <div className="text-center py-8 md:py-12">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">Gamification Hub</h2>
                 <p className="text-sm md:text-base text-muted-foreground mb-6">Access achievements, leaderboards, and AI insights...</p>
-                <a 
-                  href="/gamification" 
+                <button 
+                  onClick={() => handleTabChange('home')}
                   className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
                 >
                   <Trophy className="w-4 h-4 mr-2" />
-                  Launch Gamification Hub
-                </a>
+                  Back to Dashboard
+                </button>
               </div>
             </div>
           </div>
