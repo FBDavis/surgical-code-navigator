@@ -49,6 +49,7 @@ const CameraSchedule = () => {
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
   const [hasParsingError, setHasParsingError] = useState(false);
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
+  const [activeTab, setActiveTab] = useState("capture");
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -128,6 +129,9 @@ const CameraSchedule = () => {
       };
 
       setParsedSchedule(enhancedData);
+      
+      // Automatically switch to Cases tab after processing
+      setActiveTab("parsed");
       
       toast({
         title: "Schedule processed successfully",
@@ -331,8 +335,8 @@ const CameraSchedule = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="capture" className="w-full">
-        <TabsList className={`grid w-full ${hasParsingError ? 'grid-cols-6' : 'grid-cols-5'}`}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className={`grid w-full ${hasParsingError ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <TabsTrigger value="capture" className="flex items-center gap-2">
             <Camera className="w-4 h-4" />
             Capture
@@ -354,10 +358,6 @@ const CameraSchedule = () => {
           <TabsTrigger value="wallpaper" className="flex items-center gap-2">
             <Image className="w-4 h-4" />
             Schedule
-          </TabsTrigger>
-          <TabsTrigger value="topcodes" className="flex items-center gap-2">
-            <Trophy className="w-4 h-4" />
-            Top Codes
           </TabsTrigger>
         </TabsList>
 
@@ -629,9 +629,6 @@ const CameraSchedule = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="topcodes" className="space-y-4">
-          <TopCodesWallpaper />
-        </TabsContent>
       </Tabs>
     </div>
   );
