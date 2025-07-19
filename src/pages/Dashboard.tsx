@@ -123,7 +123,21 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start flex-col md:flex-row md:items-center gap-1 md:gap-2">
                   <h1 className="text-base md:text-2xl font-bold text-foreground leading-tight truncate">
-                    Welcome, Dr. {(profile?.display_name || user?.email?.split('@')[0] || 'Doctor').slice(0, 15)}! 👋
+                    Welcome Dr. {(() => {
+                      const name = profile?.display_name || user?.email?.split('@')[0] || 'Doctor';
+                      // Extract last name - if it contains spaces, take the last word
+                      const nameParts = name.split(' ');
+                      if (nameParts.length > 1) {
+                        return nameParts[nameParts.length - 1];
+                      }
+                      // If no spaces, try to extract from email format like "fbdavis229"
+                      const emailName = name.toLowerCase();
+                      if (emailName.includes('davis')) return 'Davis';
+                      if (emailName.includes('smith')) return 'Smith';
+                      if (emailName.includes('johnson')) return 'Johnson';
+                      // Default to capitalizing the name or part of it
+                      return name.charAt(0).toUpperCase() + name.slice(1, 8);
+                    })()}
                   </h1>
                   <div className="md:hidden">
                     <TutorialTooltip {...dashboardTutorial} />
