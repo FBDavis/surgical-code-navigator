@@ -43,22 +43,26 @@ const CameraSchedule = () => {
   const [isSavingCases, setIsSavingCases] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
+  const [hasParsingError, setHasParsingError] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
   const handleImageCaptured = async (imageData: string, text: string) => {
     setCapturedImage(imageData);
     setExtractedText(text);
+    setHasParsingError(false);
     
     if (text.trim()) {
-      await parseSchedule(text);
+      await parseScheduleWithCodes(text);
     }
   };
 
-  const parseSchedule = async (text: string) => {
+  const parseScheduleWithCodes = async (text: string) => {
     try {
       setIsParsingSchedule(true);
+      setHasParsingError(false);
       
+      // First parse the schedule structure
       const { data, error } = await supabase.functions.invoke('parse-surgery-schedule', {
         body: { extractedText: text }
       });
@@ -67,22 +71,69 @@ const CameraSchedule = () => {
         throw new Error(error.message);
       }
 
-      setParsedSchedule(data);
+      // Then automatically get CPT codes for each case
+      const casesWithCodes = await Promise.all(
+        data.cases.map(async (case_: SurgicalCase) => {
+          try {
+            const { data: codeData, error: codeError } = await supabase.functions.invoke('search-cpt-codes', {
+              body: { query: case_.procedure }
+            });
+
+            if (!codeError && codeData?.codes?.length > 0) {
+              // Take the top 3 most relevant codes
+              const relevantCodes = codeData.codes.slice(0, 3).map((code: any, index: number) => ({
+                code: code.code,
+                description: code.description,
+                rvu: code.rvu || 0
+              }));
+              
+              return {
+                ...case_,
+                cptCodes: relevantCodes
+              };
+            }
+            
+            return case_;
+          } catch (codeError) {
+            console.warn(`Failed to get CPT codes for: ${case_.procedure}`, codeError);
+            return case_;
+          }
+        })
+      );
+
+      const enhancedData = {
+        ...data,
+        cases: casesWithCodes,
+        summary: {
+          ...data.summary,
+          totalRVU: casesWithCodes.reduce((total, case_) => {
+            const caseRVU = case_.cptCodes?.reduce((sum, code) => sum + (code.rvu || 0), 0) || 0;
+            return total + caseRVU;
+          }, 0)
+        }
+      };
+
+      setParsedSchedule(enhancedData);
       
       toast({
-        title: "Schedule parsed successfully",
-        description: `Found ${data.cases?.length || 0} cases with ${data.summary?.uniqueCPTCodes?.length || 0} unique CPT codes`,
+        title: "Schedule processed successfully",
+        description: `Found ${enhancedData.cases?.length || 0} cases with CPT codes automatically applied`,
       });
     } catch (error) {
       console.error("Error parsing schedule:", error);
+      setHasParsingError(true);
       toast({
         title: "Error",
-        description: "Failed to parse the surgery schedule. Please try again.",
+        description: "Failed to parse the surgery schedule. Check the extracted text for issues.",
         variant: "destructive",
       });
     } finally {
       setIsParsingSchedule(false);
     }
+  };
+
+  const parseSchedule = async (text: string) => {
+    await parseScheduleWithCodes(text);
   };
 
   const getAllCPTCodes = (): CPTCode[] => {
@@ -187,15 +238,17 @@ const CameraSchedule = () => {
       </div>
 
       <Tabs defaultValue="capture" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className={`grid w-full ${hasParsingError ? 'grid-cols-6' : 'grid-cols-5'}`}>
           <TabsTrigger value="capture" className="flex items-center gap-2">
             <Camera className="w-4 h-4" />
             Capture
           </TabsTrigger>
-          <TabsTrigger value="extracted" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Text
-          </TabsTrigger>
+          {hasParsingError && (
+            <TabsTrigger value="extracted" className="flex items-center gap-2 text-destructive">
+              <FileText className="w-4 h-4" />
+              Text (Error)
+            </TabsTrigger>
+          )}
           <TabsTrigger value="parsed" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             Cases
@@ -237,30 +290,37 @@ const CameraSchedule = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="extracted" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Extracted Text</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {extractedText ? (
-                <div className="space-y-4">
-                  <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg max-h-96 overflow-y-auto">
-                    {extractedText}
-                  </pre>
-                  <Button 
-                    onClick={() => parseSchedule(extractedText)}
-                    disabled={isParsingSchedule}
-                  >
-                    {isParsingSchedule ? "Parsing..." : "Re-parse Schedule"}
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No text extracted yet. Please capture an image first.</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {hasParsingError && (
+          <TabsContent value="extracted" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-destructive">Extracted Text (Parsing Failed)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {extractedText ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                      <p className="text-sm text-destructive mb-2">
+                        ⚠️ There was an error parsing this text. Please review and try again.
+                      </p>
+                    </div>
+                    <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg max-h-96 overflow-y-auto">
+                      {extractedText}
+                    </pre>
+                    <Button 
+                      onClick={() => parseScheduleWithCodes(extractedText)}
+                      disabled={isParsingSchedule}
+                    >
+                      {isParsingSchedule ? "Parsing..." : "Re-parse Schedule"}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No text extracted yet. Please capture an image first.</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="parsed" className="space-y-4">
           <Card>
@@ -272,23 +332,25 @@ const CameraSchedule = () => {
             </CardHeader>
             <CardContent>
               {parsedSchedule ? (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-muted rounded-lg">
-                      <div className="text-2xl font-bold">{parsedSchedule.summary.totalCases}</div>
-                      <div className="text-sm text-muted-foreground">Total Cases</div>
-                    </div>
-                    <div className="text-center p-4 bg-muted rounded-lg">
-                      <div className="text-2xl font-bold">{parsedSchedule.summary.uniqueCPTCodes.length}</div>
-                      <div className="text-sm text-muted-foreground">Unique CPT Codes</div>
-                    </div>
-                    <div className="text-center p-4 bg-muted rounded-lg">
-                      <div className="text-2xl font-bold">
-                        {parsedSchedule.summary.totalRVU?.toFixed(1) || 'N/A'}
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-muted rounded-lg">
+                        <div className="text-2xl font-bold">{parsedSchedule.summary.totalCases}</div>
+                        <div className="text-sm text-muted-foreground">Total Cases</div>
                       </div>
-                      <div className="text-sm text-muted-foreground">Total RVU</div>
+                      <div className="text-center p-4 bg-muted rounded-lg">
+                        <div className="text-2xl font-bold">
+                          {parsedSchedule.cases.reduce((total, case_) => total + (case_.cptCodes?.length || 0), 0)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Total CPT Codes</div>
+                      </div>
+                      <div className="text-center p-4 bg-muted rounded-lg">
+                        <div className="text-2xl font-bold">
+                          {parsedSchedule.summary.totalRVU?.toFixed(1) || 'N/A'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Total RVU</div>
+                      </div>
                     </div>
-                  </div>
 
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
