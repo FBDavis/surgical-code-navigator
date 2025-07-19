@@ -96,7 +96,15 @@ Important:
 
     let parsedData;
     try {
-      parsedData = JSON.parse(parsedContent);
+      // Remove markdown code blocks if present
+      let cleanedContent = parsedContent.trim();
+      if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedContent.startsWith('```')) {
+        cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      parsedData = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parsedContent);
       throw new Error('AI returned invalid JSON format');

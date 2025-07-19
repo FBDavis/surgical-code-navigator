@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Calendar, Image, FileText, Users, Trophy } from "lucide-react";
+import { Camera, Calendar, Image, FileText, Users, Trophy, Save } from "lucide-react";
 import CameraCapture from "@/components/CameraCapture";
 import WallpaperGenerator from "@/components/WallpaperGenerator";
 import TopCodesWallpaper from "@/components/TopCodesWallpaper";
+import ScheduleCalendar from "@/components/ScheduleCalendar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CPTCode {
   code: string;
@@ -38,8 +40,11 @@ const CameraSchedule = () => {
   const [extractedText, setExtractedText] = useState<string>("");
   const [parsedSchedule, setParsedSchedule] = useState<ParsedSchedule | null>(null);
   const [isParsingSchedule, setIsParsingSchedule] = useState(false);
+  const [isSavingCases, setIsSavingCases] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleImageCaptured = async (imageData: string, text: string) => {
     setCapturedImage(imageData);
@@ -95,6 +100,71 @@ const CameraSchedule = () => {
     return allCodes;
   };
 
+  const saveCasesToCalendar = async () => {
+    if (!parsedSchedule || !user) return;
+
+    try {
+      setIsSavingCases(true);
+      
+      for (const case_ of parsedSchedule.cases) {
+        // Create the case
+        const { data: newCase, error: caseError } = await supabase
+          .from('cases')
+          .insert({
+            user_id: user.id,
+            case_name: case_.procedure,
+            procedure_description: case_.procedure,
+            procedure_date: case_.date ? `${case_.date}T${case_.time || '00:00'}:00` : null,
+            notes: `Imported from schedule scan. Surgeon: ${case_.surgeon || 'N/A'}`,
+            status: 'scheduled'
+          })
+          .select()
+          .single();
+
+        if (caseError) throw caseError;
+
+        // Add CPT codes for the case
+        if (case_.cptCodes && case_.cptCodes.length > 0) {
+          const codeInserts = case_.cptCodes.map((code, index) => ({
+            user_id: user.id,
+            case_id: newCase.id,
+            cpt_code: code.code,
+            description: code.description,
+            rvu: code.rvu || 0,
+            is_primary: index === 0,
+            position: index + 1
+          }));
+
+          const { error: codesError } = await supabase
+            .from('case_codes')
+            .insert(codeInserts);
+
+          if (codesError) throw codesError;
+        }
+      }
+
+      toast({
+        title: "Cases saved successfully",
+        description: `${parsedSchedule.cases.length} cases added to your calendar`,
+      });
+
+      // Clear the parsed schedule after saving
+      setParsedSchedule(null);
+      setExtractedText("");
+      setCapturedImage(null);
+
+    } catch (error) {
+      console.error('Error saving cases:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save cases to calendar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingCases(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="text-center space-y-2">
@@ -108,7 +178,7 @@ const CameraSchedule = () => {
       </div>
 
       <Tabs defaultValue="capture" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="capture" className="flex items-center gap-2">
             <Camera className="w-4 h-4" />
             Capture
@@ -120,6 +190,10 @@ const CameraSchedule = () => {
           <TabsTrigger value="parsed" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             Cases
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Calendar
           </TabsTrigger>
           <TabsTrigger value="wallpaper" className="flex items-center gap-2">
             <Image className="w-4 h-4" />
@@ -208,6 +282,17 @@ const CameraSchedule = () => {
                   </div>
 
                   <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={saveCasesToCalendar}
+                        disabled={isSavingCases}
+                        className="flex items-center gap-2"
+                      >
+                        <Save className="w-4 h-4" />
+                        {isSavingCases ? "Saving..." : "Save to Calendar"}
+                      </Button>
+                    </div>
+
                     {parsedSchedule.cases.map((case_, index) => (
                       <Card key={index}>
                         <CardContent className="p-4">
@@ -269,6 +354,13 @@ const CameraSchedule = () => {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-4">
+          <ScheduleCalendar 
+            selectedDate={selectedCalendarDate}
+            onDateSelect={setSelectedCalendarDate}
+          />
         </TabsContent>
 
         <TabsContent value="topcodes" className="space-y-4">
