@@ -35,8 +35,16 @@ export default function Auth() {
   useEffect(() => {
     // Check for password reset token in URL
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('type') === 'recovery') {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    
+    console.log('URL params:', Object.fromEntries(urlParams));
+    console.log('Hash params:', Object.fromEntries(hashParams));
+    
+    // Check both URL and hash for type=recovery
+    if (urlParams.get('type') === 'recovery' || hashParams.get('type') === 'recovery') {
+      console.log('Password recovery detected, showing update form');
       setShowUpdatePassword(true);
+      return; // Don't redirect if we're in recovery mode
     }
 
     if (user) {
@@ -97,7 +105,7 @@ export default function Auth() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`,
+        redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) throw error;
