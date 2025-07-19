@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Calendar, Image, FileText, Users, Trophy, Save } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Camera, Calendar, Image, FileText, Users, Trophy, Save, Edit, Plus, Minus } from "lucide-react";
 import CameraCapture from "@/components/CameraCapture";
 import WallpaperGenerator from "@/components/WallpaperGenerator";
 import TopCodesWallpaper from "@/components/TopCodesWallpaper";
@@ -25,6 +28,7 @@ interface SurgicalCase {
   surgeon?: string;
   date?: string;
   time?: string;
+  selected?: boolean;
 }
 
 interface ParsedSchedule {
@@ -44,17 +48,26 @@ const CameraSchedule = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
   const [hasParsingError, setHasParsingError] = useState(false);
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
   const handleImageCaptured = async (imageData: string, text: string) => {
+    setIsProcessingPhoto(true);
     setCapturedImage(imageData);
     setExtractedText(text);
     setHasParsingError(false);
     
+    toast({
+      title: "Processing Photo",
+      description: "Extracting cases and applying CPT codes...",
+    });
+    
     if (text.trim()) {
       await parseScheduleWithCodes(text);
     }
+    
+    setIsProcessingPhoto(false);
   };
 
   const parseScheduleWithCodes = async (text: string) => {
@@ -76,12 +89,12 @@ const CameraSchedule = () => {
         data.cases.map(async (case_: SurgicalCase) => {
           try {
             const { data: codeData, error: codeError } = await supabase.functions.invoke('search-cpt-codes', {
-              body: { query: case_.procedure }
+              body: { procedureDescription: case_.procedure }
             });
 
-            if (!codeError && codeData?.codes?.length > 0) {
-              // Take the top 3 most relevant codes
-              const relevantCodes = codeData.codes.slice(0, 3).map((code: any, index: number) => ({
+            if (!codeError && codeData?.primaryCodes?.length > 0) {
+              // Take the top 3 most relevant codes from primary codes
+              const relevantCodes = codeData.primaryCodes.slice(0, 3).map((code: any) => ({
                 code: code.code,
                 description: code.description,
                 rvu: code.rvu || 0
@@ -89,14 +102,15 @@ const CameraSchedule = () => {
               
               return {
                 ...case_,
-                cptCodes: relevantCodes
+                cptCodes: relevantCodes,
+                selected: true
               };
             }
             
-            return case_;
+            return { ...case_, selected: true };
           } catch (codeError) {
             console.warn(`Failed to get CPT codes for: ${case_.procedure}`, codeError);
-            return case_;
+            return { ...case_, selected: true };
           }
         })
       );
@@ -151,7 +165,74 @@ const CameraSchedule = () => {
     return allCodes;
   };
 
-  const saveCasesToCalendar = async () => {
+  const toggleCaseSelection = (index: number) => {
+    if (!parsedSchedule) return;
+    
+    const updatedCases = [...parsedSchedule.cases];
+    updatedCases[index].selected = !updatedCases[index].selected;
+    
+    setParsedSchedule({
+      ...parsedSchedule,
+      cases: updatedCases
+    });
+  };
+
+  const toggleAllCases = () => {
+    if (!parsedSchedule) return;
+    
+    const allSelected = parsedSchedule.cases.every(c => c.selected);
+    const updatedCases = parsedSchedule.cases.map(c => ({ ...c, selected: !allSelected }));
+    
+    setParsedSchedule({
+      ...parsedSchedule,
+      cases: updatedCases
+    });
+  };
+
+  const addCPTCode = (caseIndex: number) => {
+    if (!parsedSchedule) return;
+    
+    const updatedCases = [...parsedSchedule.cases];
+    updatedCases[caseIndex].cptCodes.push({
+      code: "",
+      description: "",
+      rvu: 0
+    });
+    
+    setParsedSchedule({
+      ...parsedSchedule,
+      cases: updatedCases
+    });
+  };
+
+  const removeCPTCode = (caseIndex: number, codeIndex: number) => {
+    if (!parsedSchedule) return;
+    
+    const updatedCases = [...parsedSchedule.cases];
+    updatedCases[caseIndex].cptCodes.splice(codeIndex, 1);
+    
+    setParsedSchedule({
+      ...parsedSchedule,
+      cases: updatedCases
+    });
+  };
+
+  const updateCPTCode = (caseIndex: number, codeIndex: number, field: string, value: string | number) => {
+    if (!parsedSchedule) return;
+    
+    const updatedCases = [...parsedSchedule.cases];
+    updatedCases[caseIndex].cptCodes[codeIndex] = {
+      ...updatedCases[caseIndex].cptCodes[codeIndex],
+      [field]: value
+    };
+    
+    setParsedSchedule({
+      ...parsedSchedule,
+      cases: updatedCases
+    });
+  };
+
+  const saveCasesToCalendar = async (selectedOnly: boolean = true) => {
     if (!parsedSchedule) return;
 
     if (!user) {
@@ -163,10 +244,23 @@ const CameraSchedule = () => {
       return;
     }
 
+    const casesToSave = selectedOnly 
+      ? parsedSchedule.cases.filter(c => c.selected)
+      : parsedSchedule.cases;
+
+    if (casesToSave.length === 0) {
+      toast({
+        title: "No Cases Selected",
+        description: "Please select at least one case to save",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsSavingCases(true);
       
-      for (const case_ of parsedSchedule.cases) {
+      for (const case_ of casesToSave) {
         // Create the case
         const { data: newCase, error: caseError } = await supabase
           .from('cases')
@@ -205,7 +299,7 @@ const CameraSchedule = () => {
 
       toast({
         title: "Cases saved successfully",
-        description: `${parsedSchedule.cases.length} cases added to your calendar`,
+        description: `${casesToSave.length} cases added to your calendar`,
       });
 
       // Clear the parsed schedule after saving
@@ -268,6 +362,17 @@ const CameraSchedule = () => {
         </TabsList>
 
         <TabsContent value="capture" className="space-y-4">
+          {isProcessingPhoto && (
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  <span>Processing photo and applying CPT codes...</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           <CameraCapture 
             onImageCaptured={handleImageCaptured}
             title="Capture Surgery Schedule"
@@ -352,70 +457,135 @@ const CameraSchedule = () => {
                       </div>
                     </div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-muted-foreground">
-                        {user ? "Ready to save to your calendar" : "Sign in required to save cases"}
-                      </div>
-                      <Button 
-                        onClick={saveCasesToCalendar}
-                        disabled={isSavingCases || !user}
-                        className="flex items-center gap-2"
-                        variant={user ? "default" : "outline"}
-                      >
-                        <Save className="w-4 h-4" />
-                        {isSavingCases ? "Saving..." : user ? "Save to Calendar" : "Sign In to Save"}
-                      </Button>
-                    </div>
+                   <div className="space-y-4">
+                     <div className="flex justify-between items-center">
+                       <div className="flex items-center gap-4">
+                         <Checkbox
+                           id="select-all"
+                           checked={parsedSchedule.cases.every(c => c.selected)}
+                           onCheckedChange={toggleAllCases}
+                         />
+                         <Label htmlFor="select-all" className="text-sm text-muted-foreground">
+                           Select All Cases ({parsedSchedule.cases.filter(c => c.selected).length} selected)
+                         </Label>
+                       </div>
+                       <div className="flex gap-2">
+                         <Button 
+                           onClick={() => saveCasesToCalendar(true)}
+                           disabled={isSavingCases || !user || !parsedSchedule.cases.some(c => c.selected)}
+                           className="flex items-center gap-2"
+                           variant="default"
+                           size="sm"
+                         >
+                           <Save className="w-4 h-4" />
+                           {isSavingCases ? "Saving..." : "Save Selected"}
+                         </Button>
+                         <Button 
+                           onClick={() => saveCasesToCalendar(false)}
+                           disabled={isSavingCases || !user}
+                           className="flex items-center gap-2"
+                           variant="outline"
+                           size="sm"
+                         >
+                           <Save className="w-4 h-4" />
+                           Save All
+                         </Button>
+                       </div>
+                     </div>
 
-                    {parsedSchedule.cases.map((case_, index) => (
-                      <Card key={index}>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h4 className="font-semibold">{case_.procedure}</h4>
-                                {case_.patientIdentifier && (
-                                  <p className="text-sm text-muted-foreground">
-                                    Patient: {case_.patientIdentifier}
-                                  </p>
-                                )}
-                                {case_.surgeon && (
-                                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                    <Users className="w-3 h-3" />
-                                    {case_.surgeon}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="text-right text-sm text-muted-foreground">
-                                {case_.date && <div>{case_.date}</div>}
-                                {case_.time && <div>{case_.time}</div>}
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-wrap gap-2">
-                              {case_.cptCodes && case_.cptCodes.length > 0 ? (
-                                case_.cptCodes.map((code, codeIndex) => (
-                                  <Badge 
-                                    key={codeIndex} 
-                                    variant={codeIndex === 0 ? "default" : "secondary"}
-                                    className={codeIndex === 0 ? "bg-primary" : ""}
-                                  >
-                                    {code.code} - {code.description}
-                                    {code.rvu && ` (${code.rvu} RVU)`}
-                                    {codeIndex === 0 && " [PRIMARY]"}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <Badge variant="outline" className="text-muted-foreground">
-                                  No CPT codes identified
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                     {parsedSchedule.cases.map((case_, index) => (
+                       <Card key={index} className={case_.selected ? "border-primary" : ""}>
+                         <CardContent className="p-4">
+                           <div className="space-y-3">
+                             <div className="flex items-start justify-between">
+                               <div className="flex items-start gap-3">
+                                 <Checkbox
+                                   checked={case_.selected}
+                                   onCheckedChange={() => toggleCaseSelection(index)}
+                                 />
+                                 <div>
+                                   <h4 className="font-semibold">{case_.procedure}</h4>
+                                   {case_.patientIdentifier && (
+                                     <p className="text-sm text-muted-foreground">
+                                       Patient: {case_.patientIdentifier}
+                                     </p>
+                                   )}
+                                   {case_.surgeon && (
+                                     <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                       <Users className="w-3 h-3" />
+                                       {case_.surgeon}
+                                     </p>
+                                   )}
+                                 </div>
+                               </div>
+                               <div className="text-right text-sm text-muted-foreground">
+                                 {case_.date && <div>{case_.date}</div>}
+                                 {case_.time && <div>{case_.time}</div>}
+                               </div>
+                             </div>
+                             
+                             <div className="space-y-2">
+                               <div className="flex items-center justify-between">
+                                 <Label className="text-sm font-medium">CPT Codes</Label>
+                                 <Button
+                                   size="sm"
+                                   variant="outline"
+                                   onClick={() => addCPTCode(index)}
+                                   className="h-6 px-2"
+                                 >
+                                   <Plus className="w-3 h-3" />
+                                 </Button>
+                               </div>
+                               
+                               {case_.cptCodes && case_.cptCodes.length > 0 ? (
+                                 <div className="space-y-2">
+                                   {case_.cptCodes.map((code, codeIndex) => (
+                                     <div key={codeIndex} className="flex items-center gap-2 p-2 border rounded">
+                                       <div className="flex-1 grid grid-cols-3 gap-2">
+                                         <Input
+                                           placeholder="CPT Code"
+                                           value={code.code}
+                                           onChange={(e) => updateCPTCode(index, codeIndex, 'code', e.target.value)}
+                                           className="h-8"
+                                         />
+                                         <Input
+                                           placeholder="Description"
+                                           value={code.description}
+                                           onChange={(e) => updateCPTCode(index, codeIndex, 'description', e.target.value)}
+                                           className="h-8"
+                                         />
+                                         <Input
+                                           type="number"
+                                           placeholder="RVU"
+                                           value={code.rvu}
+                                           onChange={(e) => updateCPTCode(index, codeIndex, 'rvu', parseFloat(e.target.value) || 0)}
+                                           className="h-8"
+                                         />
+                                       </div>
+                                       <Badge variant={codeIndex === 0 ? "default" : "secondary"}>
+                                         {codeIndex === 0 ? "PRIMARY" : "SECONDARY"}
+                                       </Badge>
+                                       <Button
+                                         size="sm"
+                                         variant="outline"
+                                         onClick={() => removeCPTCode(index, codeIndex)}
+                                         className="h-6 w-6 p-0"
+                                       >
+                                         <Minus className="w-3 h-3" />
+                                       </Button>
+                                     </div>
+                                   ))}
+                                 </div>
+                               ) : (
+                                 <div className="p-2 border rounded text-center text-muted-foreground">
+                                   No CPT codes identified
+                                 </div>
+                               )}
+                             </div>
+                           </div>
+                         </CardContent>
+                       </Card>
+                     ))}
                   </div>
                 </div>
               ) : (
