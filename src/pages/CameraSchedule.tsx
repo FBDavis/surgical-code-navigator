@@ -85,7 +85,7 @@ const CameraSchedule = () => {
         throw new Error(error.message);
       }
 
-      // Then automatically get CPT codes for each case
+      // Then automatically get the primary CPT code for each case
       const casesWithCodes = await Promise.all(
         data.cases.map(async (case_: SurgicalCase) => {
           try {
@@ -94,16 +94,17 @@ const CameraSchedule = () => {
             });
 
             if (!codeError && codeData?.primaryCodes?.length > 0) {
-              // Take the top 3 most relevant codes from primary codes
-              const relevantCodes = codeData.primaryCodes.slice(0, 3).map((code: any) => ({
-                code: code.code,
-                description: code.description,
-                rvu: code.rvu || 0
-              }));
+              // Take only the most relevant primary code (highest RVU)
+              const primaryCode = codeData.primaryCodes[0];
+              const relevantCode = {
+                code: primaryCode.code,
+                description: primaryCode.description,
+                rvu: primaryCode.rvu || 0
+              };
               
               return {
                 ...case_,
-                cptCodes: relevantCodes,
+                cptCodes: [relevantCode], // Only one primary code
                 selected: true
               };
             }
