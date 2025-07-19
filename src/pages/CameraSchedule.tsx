@@ -101,7 +101,16 @@ const CameraSchedule = () => {
   };
 
   const saveCasesToCalendar = async () => {
-    if (!parsedSchedule || !user) return;
+    if (!parsedSchedule) return;
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to save cases to your calendar",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setIsSavingCases(true);
@@ -282,14 +291,18 @@ const CameraSchedule = () => {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex justify-end">
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-muted-foreground">
+                        {user ? "Ready to save to your calendar" : "Sign in required to save cases"}
+                      </div>
                       <Button 
                         onClick={saveCasesToCalendar}
-                        disabled={isSavingCases}
+                        disabled={isSavingCases || !user}
                         className="flex items-center gap-2"
+                        variant={user ? "default" : "outline"}
                       >
                         <Save className="w-4 h-4" />
-                        {isSavingCases ? "Saving..." : "Save to Calendar"}
+                        {isSavingCases ? "Saving..." : user ? "Save to Calendar" : "Sign In to Save"}
                       </Button>
                     </div>
 
@@ -319,12 +332,23 @@ const CameraSchedule = () => {
                             </div>
                             
                             <div className="flex flex-wrap gap-2">
-                              {case_.cptCodes.map((code, codeIndex) => (
-                                <Badge key={codeIndex} variant="outline">
-                                  {code.code} - {code.description}
-                                  {code.rvu && ` (${code.rvu} RVU)`}
+                              {case_.cptCodes && case_.cptCodes.length > 0 ? (
+                                case_.cptCodes.map((code, codeIndex) => (
+                                  <Badge 
+                                    key={codeIndex} 
+                                    variant={codeIndex === 0 ? "default" : "secondary"}
+                                    className={codeIndex === 0 ? "bg-primary" : ""}
+                                  >
+                                    {code.code} - {code.description}
+                                    {code.rvu && ` (${code.rvu} RVU)`}
+                                    {codeIndex === 0 && " [PRIMARY]"}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  No CPT codes identified
                                 </Badge>
-                              ))}
+                              )}
                             </div>
                           </div>
                         </CardContent>
@@ -357,10 +381,20 @@ const CameraSchedule = () => {
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-4">
-          <ScheduleCalendar 
-            selectedDate={selectedCalendarDate}
-            onDateSelect={setSelectedCalendarDate}
-          />
+          {user ? (
+            <ScheduleCalendar 
+              selectedDate={selectedCalendarDate}
+              onDateSelect={setSelectedCalendarDate}
+            />
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">
+                  Please sign in to view your surgery calendar.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="topcodes" className="space-y-4">
