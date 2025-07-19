@@ -123,7 +123,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start flex-col md:flex-row md:items-center gap-1 md:gap-2">
                   <h1 className="text-base md:text-2xl font-bold text-foreground leading-tight truncate">
-                    Welcome, {(profile?.display_name || user?.email?.split('@')[0] || 'Doctor').slice(0, 15)}! 👋
+                    Welcome, Dr. {(profile?.display_name || user?.email?.split('@')[0] || 'Doctor').slice(0, 15)}! 👋
                   </h1>
                   <div className="md:hidden">
                     <TutorialTooltip {...dashboardTutorial} />
