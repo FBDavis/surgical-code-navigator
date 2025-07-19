@@ -200,13 +200,13 @@ All colors MUST be HSL.
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  z-index: 99999 !important;
+  z-index: 100001 !important;
   pointer-events: auto !important;
 }
 
 .tutorial-highlight {
   position: relative !important;
-  z-index: 100000 !important;
+  z-index: 100002 !important;
   box-shadow: 0 0 0 4px hsl(195 100% 28% / 0.3) !important;
   border-radius: 8px !important;
 }
