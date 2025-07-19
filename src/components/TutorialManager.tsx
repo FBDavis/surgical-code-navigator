@@ -187,128 +187,130 @@ const TutorialOverlay = () => {
   }, [step.element]);
 
   return (
-    <div className="tutorial-overlay">
+    <>
       {/* Dark overlay */}
-      <div className="fixed inset-0 bg-black/50 z-[100003]" />
+      <div className="fixed inset-0 bg-black/50 z-[100010]" />
       
-      {/* Tutorial card */}
-      <div className="fixed inset-0 z-[100004] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-2xl border-primary/20 bg-card backdrop-blur-sm relative z-[100005]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg font-semibold">
-                  {activeTutorial.title}
-                </CardTitle>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={skipTutorial}
-                className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <Badge variant="outline" className="text-xs">
-                  Step {currentStep + 1} of {activeTutorial.steps.length}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  ~{activeTutorial.estimatedTime} min
-                </span>
-              </div>
-              
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className="bg-primary rounded-full h-2 transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-primary" />
-                {step.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {step.content}
-              </p>
-            </div>
-
-            {step.highlight && (
-              <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-                <p className="text-sm text-primary font-medium">
-                  💡 {step.highlight}
-                </p>
-              </div>
-            )}
-
-            {step.tips && step.tips.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">Quick Tips:</p>
-                <ul className="space-y-1">
-                  {step.tips.map((tip, index) => (
-                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <CheckCircle className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-4 border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={prevStep}
-                disabled={currentStep === 0}
-                className="h-9"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              
-              <div className="flex gap-2">
+      {/* Tutorial card - positioned independently with highest z-index */}
+      <div className="fixed inset-0 z-[100020] flex items-center justify-center p-4 pointer-events-none">
+        <div className="pointer-events-auto">
+          <Card className="w-full max-w-md shadow-2xl border-primary/20 bg-card backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg font-semibold">
+                    {activeTutorial.title}
+                  </CardTitle>
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={skipTutorial}
-                  className="h-9 text-muted-foreground"
+                  className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                 >
-                  Skip Tour
-                </Button>
-                
-                <Button
-                  size="sm"
-                  onClick={nextStep}
-                  className="h-9"
-                >
-                  {currentStep === activeTutorial.steps.length - 1 ? (
-                    <>
-                      Complete
-                      <CheckCircle className="h-4 w-4 ml-1" />
-                    </>
-                  ) : (
-                    <>
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </>
-                  )}
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <Badge variant="outline" className="text-xs">
+                    Step {currentStep + 1} of {activeTutorial.steps.length}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    ~{activeTutorial.estimatedTime} min
+                  </span>
+                </div>
+                
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary rounded-full h-2 transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-primary" />
+                  {step.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {step.content}
+                </p>
+              </div>
+
+              {step.highlight && (
+                <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                  <p className="text-sm text-primary font-medium">
+                    💡 {step.highlight}
+                  </p>
+                </div>
+              )}
+
+              {step.tips && step.tips.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">Quick Tips:</p>
+                  <ul className="space-y-1">
+                    {step.tips.map((tip, index) => (
+                      <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <CheckCircle className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-4 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={prevStep}
+                  disabled={currentStep === 0}
+                  className="h-9"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={skipTutorial}
+                    className="h-9 text-muted-foreground"
+                  >
+                    Skip Tour
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    onClick={nextStep}
+                    className="h-9"
+                  >
+                    {currentStep === activeTutorial.steps.length - 1 ? (
+                      <>
+                        Complete
+                        <CheckCircle className="h-4 w-4 ml-1" />
+                      </>
+                    ) : (
+                      <>
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
