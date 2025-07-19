@@ -41,6 +41,9 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   const [showTutorialHub, setShowTutorialHub] = useState(false);
   const [showReferralBanner, setShowReferralBanner] = useState(false);
   const { completedTutorials, startTutorial } = useTutorial();
+  
+  // Check if user is in guest mode
+  const isGuest = !user && new URLSearchParams(window.location.search).get('guest') === 'true';
 
   useEffect(() => {
     setMounted(true);
@@ -95,6 +98,10 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
           navigate('/');
       }
     }
+  };
+
+  const handleSignIn = () => {
+    navigate('/auth?auth=true');
   };
 
   const recentCodes = [
@@ -157,6 +164,34 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
       </div>
 
       <div className="p-4 md:p-6 space-y-4 md:space-y-8 pb-24 md:pb-6">
+        {/* Guest Mode Banner */}
+        {isGuest && (
+          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-100">Testing Mode - Limited Functionality</h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                      You're using OpCoder in guest mode. Sign up or sign in for full access, data persistence, and HIPAA compliance.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <Button variant="outline" size="sm" onClick={handleSignIn} className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                    Sign In
+                  </Button>
+                  <Button size="sm" onClick={handleSignIn} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Sign Up Free
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {/* Quick Actions - Mobile Priority */}
         <div className="block md:hidden quick-actions">
           <div className="flex items-center justify-between mb-3">

@@ -20,12 +20,16 @@ const Index = () => {
 
   useEffect(() => {
     console.log('Auth check - user:', !!user, 'loading:', loading, 'isGuest:', isGuest);
-    // For beta distribution, default to guest mode if no explicit auth is requested
-    // Only redirect to auth if explicitly requested (e.g., from a "Sign In" button)
+    
     if (!loading && !user && !isGuest) {
-      // Check if user explicitly wants to authenticate
+      // Check if user explicitly wants to authenticate or is accessing a protected action
       const wantsAuth = searchParams.get('auth') === 'true';
-      if (wantsAuth) {
+      const needsAuth = location.pathname.includes('/new-case') || 
+                        location.pathname.includes('/search-codes') ||
+                        location.pathname.includes('/settings') ||
+                        location.pathname.includes('/resident-tracker');
+      
+      if (wantsAuth || needsAuth) {
         console.log('Redirecting to auth');
         const currentPath = location.pathname;
         const currentParams = searchParams.toString();
@@ -33,7 +37,7 @@ const Index = () => {
         const authUrl = `/auth?returnTo=${returnTo}`;
         navigate(authUrl);
       } else {
-        // Default to guest mode for easier beta testing
+        // Show auth option for better UX
         const currentParams = new URLSearchParams(searchParams);
         currentParams.set('guest', 'true');
         const newUrl = location.pathname + '?' + currentParams.toString();
