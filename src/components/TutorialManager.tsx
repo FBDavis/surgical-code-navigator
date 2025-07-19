@@ -187,13 +187,13 @@ const TutorialOverlay = () => {
   }, [step.element]);
 
   return (
-    <>
+    <div className="tutorial-overlay">
       {/* Dark overlay */}
-      <div className="fixed inset-0 bg-black/50 z-[100]" />
+      <div className="fixed inset-0 bg-black/50 z-[9999]" />
       
       {/* Tutorial card */}
-      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-2xl border-primary/20 bg-card/95 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl border-primary/20 bg-card backdrop-blur-sm relative z-[10001]">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -308,7 +308,7 @@ const TutorialOverlay = () => {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 };
 
