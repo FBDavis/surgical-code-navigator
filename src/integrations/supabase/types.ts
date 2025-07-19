@@ -1012,6 +1012,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_reset_password: {
+        Args: { user_email: string; new_password: string }
+        Returns: boolean
+      }
       create_referral_reminders: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1025,6 +1029,10 @@ export type Database = {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: boolean
+      }
+      promote_user_to_admin: {
+        Args: { user_email: string }
         Returns: boolean
       }
       reset_user_data: {
