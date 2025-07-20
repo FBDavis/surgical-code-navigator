@@ -19,9 +19,10 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   const navigate = useNavigate();
   
   const isGuest = searchParams.get('guest') === 'true';
-  const isAuthenticated = !!user && !isGuest;
+  // If we're in guest mode, treat as not authenticated regardless of user state
+  const isAuthenticated = !isGuest && !!user;
   
-  console.log('Navigation auth state:', { user, isGuest, isAuthenticated });
+  console.log('Navigation auth state:', { user: !!user, isGuest, isAuthenticated });
 
   const tabs = [
     { id: 'home', label: 'Dashboard', icon: Home },
