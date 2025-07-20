@@ -129,25 +129,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, !!session);
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
           
           if (session?.user) {
             // Fetch user profile
-            const { data: profileData, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            if (!error && profileData && mounted) {
-              setProfile(profileData);
+            try {
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              console.log('Profile fetch in auth change:', !!profileData, error?.message);
+              if (!error && profileData && mounted) {
+                setProfile(profileData);
+              }
+            } catch (error) {
+              console.error('Error fetching profile in auth change:', error);
             }
           } else {
             setProfile(null);
             setSubscriptionStatus(null);
           }
+          
+          // Always set loading to false after handling auth state change
+          setLoading(false);
           
           // Check subscription status when user logs in
           if (session?.user) {
