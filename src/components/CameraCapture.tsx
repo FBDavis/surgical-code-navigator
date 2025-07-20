@@ -88,8 +88,12 @@ const CameraCapture = ({
           body: { imageBase64: image.base64String }
         });
 
-        console.log("5. Function response:", { data, error });
+        console.log("5. Function response received");
+        console.log("5a. Data:", data);
+        console.log("5b. Error:", error);
+        
         if (error) {
+          console.log("5c. Error details:", error);
           throw new Error(error.message);
         }
 
