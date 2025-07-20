@@ -32,10 +32,7 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('authorization')
-    if (!authHeader) {
-      throw new Error('No authorization header')
-    }
-
+    
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
@@ -46,15 +43,19 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
-        headers: { authorization: authHeader },
+        headers: authHeader ? { authorization: authHeader } : {},
       },
     })
 
-    // Get user from JWT
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      throw new Error('Invalid authentication')
+    // Try to get user from JWT, but allow guest access
+    let user = null
+    if (authHeader) {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      user = authUser
     }
+    
+    // For guest users, create a temporary user ID based on timestamp
+    const userId = user?.id || `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     const {
       caseName,
@@ -72,21 +73,24 @@ serve(async (req) => {
     // Calculate total RVU and estimated value
     const totalRvu = codes.reduce((sum, code) => sum + code.rvu, 0)
     
-    // Get user's default RVU rate
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('default_rvu_rate')
-      .eq('user_id', user.id)
-      .single()
-
-    const rvuRate = profile?.default_rvu_rate || 65.00
+    // Get user's default RVU rate (only for authenticated users)
+    let rvuRate = 65.00
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('default_rvu_rate')
+        .eq('user_id', user.id)
+        .single()
+      rvuRate = profile?.default_rvu_rate || 65.00
+    }
+    
     const estimatedValue = totalRvu * rvuRate
 
     // Create the case
     const { data: newCase, error: caseError } = await supabase
       .from('cases')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         case_name: caseName,
         procedure_description: procedureDescription,
         procedure_date: procedureDate || null,
@@ -106,7 +110,7 @@ serve(async (req) => {
     // Add the CPT codes to the case
     const caseCodesData = codes.map((code, index) => ({
       case_id: newCase.id,
-      user_id: user.id,
+      user_id: userId,
       cpt_code: code.code,
       description: code.description,
       rvu: code.rvu,
