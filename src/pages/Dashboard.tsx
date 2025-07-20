@@ -4,6 +4,7 @@ import { HomeCard } from '@/components/HomeCard';
 import { StatsOverview } from '@/components/StatsOverview';
 import { FloatingReferralBanner } from '@/components/ReferralNotifications';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,8 +43,102 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   const [showReferralBanner, setShowReferralBanner] = useState(false);
   const { completedTutorials, startTutorial } = useTutorial();
   
+  // Dashboard data state
+  const [dashboardData, setDashboardData] = useState({
+    totalCases: 0,
+    totalRVUs: 0,
+    thisMonthCases: 0,
+    recentCodes: [] as Array<{ code: string; description: string; rvu: number; date: string; case_name: string }>,
+    topCodes: [] as Array<{ code: string; count: number; rvu: number; description: string }>
+  });
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  
   // Check if user is in guest mode
   const isGuest = !user && new URLSearchParams(window.location.search).get('guest') === 'true';
+
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    if (!user) {
+      setIsLoadingData(false);
+      return;
+    }
+
+    try {
+      setIsLoadingData(true);
+      
+      // Fetch total cases and RVUs
+      const { data: cases, error: casesError } = await supabase
+        .from('cases')
+        .select('id, total_rvu, created_at, case_name')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (casesError) throw casesError;
+
+      // Fetch recent codes with case details
+      const { data: recentCodes, error: codesError } = await supabase
+        .from('case_codes')
+        .select(`
+          cpt_code,
+          description,
+          rvu,
+          created_at,
+          cases!inner(case_name, user_id)
+        `)
+        .eq('cases.user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (codesError) throw codesError;
+
+      // Get this month's cases
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const thisMonthCases = cases?.filter(c => new Date(c.created_at) >= startOfMonth) || [];
+
+      // Calculate top codes
+      const codeFrequency: { [key: string]: { count: number; rvu: number; description: string } } = {};
+      recentCodes?.forEach(code => {
+        const key = code.cpt_code;
+        if (codeFrequency[key]) {
+          codeFrequency[key].count++;
+        } else {
+          codeFrequency[key] = {
+            count: 1,
+            rvu: code.rvu || 0,
+            description: code.description
+          };
+        }
+      });
+
+      const topCodes = Object.entries(codeFrequency)
+        .sort(([,a], [,b]) => b.count - a.count)
+        .slice(0, 5)
+        .map(([code, data]) => ({
+          code,
+          count: data.count,
+          rvu: data.rvu,
+          description: data.description
+        }));
+
+      setDashboardData({
+        totalCases: cases?.length || 0,
+        totalRVUs: cases?.reduce((sum, c) => sum + (c.total_rvu || 0), 0) || 0,
+        thisMonthCases: thisMonthCases.length,
+        recentCodes: recentCodes?.slice(0, 5).map(code => ({
+          code: code.cpt_code,
+          description: code.description,
+          rvu: code.rvu || 0,
+          date: new Date(code.created_at).toLocaleDateString(),
+          case_name: (code.cases as any)?.case_name || 'Unknown Case'
+        })) || [],
+        topCodes
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -68,6 +163,11 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     
     checkTutorialPreference();
     
+    // Fetch dashboard data when user is available
+    if (user) {
+      fetchDashboardData();
+    }
+    
     // Show referral banner for subscribed users after some interaction
     if (subscriptionStatus?.subscribed && user) {
       const timer = setTimeout(() => {
@@ -77,13 +177,6 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
       return () => clearTimeout(timer);
     }
   }, [user, profile, completedTutorials, subscriptionStatus]);
-
-  // Start with zero data for new accounts
-  const totalSearches = 0;
-  const recentSearches = 0;
-  const thisMonth = 0;
-  const totalRVUs = 0;
-  const commonProcedures = 0;
 
   const handleNavigation = (tab: string) => {
     if (onTabChange) {
@@ -111,10 +204,6 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   const handleSignIn = () => {
     navigate('/auth?auth=true');
   };
-
-  const recentCodes: Array<{ code: string; description: string; rvu: number; date: string }> = [];
-
-  const topCodes: Array<{ code: string; count: number; rvu: number }> = [];
 
   if (!mounted) return null;
 
@@ -250,10 +339,10 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
 
         {/* Stats Overview */}
         <StatsOverview 
-          totalSearches={totalSearches}
-          recentSearches={recentSearches}
-          thisMonth={thisMonth}
-          totalRVUs={totalRVUs}
+          totalSearches={dashboardData.totalCases}
+          recentSearches={dashboardData.recentCodes.length}
+          thisMonth={dashboardData.thisMonthCases}
+          totalRVUs={dashboardData.totalRVUs}
         />
 
         {/* Main Feature Cards - Desktop Priority */}
@@ -293,7 +382,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             description="Access your most frequently used CPT codes and procedures"
             icon={History}
             onClick={() => {}}
-            count={commonProcedures}
+            count={dashboardData.topCodes.length}
             gradient="from-green-500/20 to-green-600/5"
           />
           
@@ -302,7 +391,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             description="View comprehensive statistics and procedure analytics"
             icon={FileText}
             onClick={() => {}}
-            count={thisMonth}
+            count={dashboardData.thisMonthCases}
             gradient="from-purple-500/20 to-purple-600/5"
           />
           
@@ -333,7 +422,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 description="Most used codes"
                 icon={History}
                 onClick={() => {}}
-                count={commonProcedures}
+                count={dashboardData.topCodes.length}
                 gradient="from-green-500/20 to-green-600/5"
               />
               
@@ -352,7 +441,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 description="This month"
                 icon={FileText}
                 onClick={() => {}}
-                count={thisMonth}
+                count={dashboardData.thisMonthCases}
                 gradient="from-purple-500/20 to-purple-600/5"
               />
               
@@ -381,22 +470,30 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentCodes.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between py-3 border-b border-border/30 last:border-0">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="font-mono text-xs">
-                          {item.code}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{item.date}</span>
+                {dashboardData.recentCodes.length > 0 ? (
+                  dashboardData.recentCodes.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between py-3 border-b border-border/30 last:border-0">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="secondary" className="font-mono text-xs">
+                            {item.code}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{item.date}</span>
+                        </div>
+                        <p className="text-sm text-foreground">{item.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{item.case_name}</p>
                       </div>
-                      <p className="text-sm text-foreground mt-1">{item.description}</p>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-primary">{item.rvu} RVU</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-primary">{item.rvu} RVU</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No recent activity yet</p>
+                    <p className="text-xs mt-1">Start logging cases to see your activity here</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -411,22 +508,32 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {topCodes.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
-                        {index + 1}
-                      </span>
-                      <Badge variant="outline" className="font-mono">
-                        {item.code}
-                      </Badge>
+                {dashboardData.topCodes.length > 0 ? (
+                  dashboardData.topCodes.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <Badge variant="outline" className="font-mono mb-1">
+                            {item.code}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">{item.description}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-foreground">{item.count} times</p>
+                        <p className="text-xs text-muted-foreground">{item.rvu} RVU each</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-foreground">{item.count} times</p>
-                      <p className="text-xs text-muted-foreground">{item.rvu} RVU each</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No procedures logged yet</p>
+                    <p className="text-xs mt-1">Common procedures will appear here as you log more cases</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
