@@ -38,25 +38,24 @@ serve(async (req) => {
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing Supabase configuration')
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { authorization: authHeader },
-      },
-    })
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get user from JWT
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log('Auth check result:', { user: user?.id, error: userError?.message, authHeader: authHeader?.substring(0, 20) + '...' })
+    // Extract JWT from authorization header
+    const jwt = authHeader.replace('Bearer ', '')
+    
+    // Get user from JWT using service role client
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt)
+    console.log('Auth check result:', { user: user?.id, error: userError?.message })
     
     if (userError || !user) {
       console.error('Authentication failed:', userError)
-      throw new Error(`Invalid authentication: ${userError?.message || 'No user found'}`)
+      throw new Error(`Auth session missing!`)
     }
 
     const {
