@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, LogIn, Camera, MessageSquare, GraduationCap, Crown, Trophy, BookOpen } from 'lucide-react';
+import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, LogIn, Camera, MessageSquare, GraduationCap, Crown, Trophy, BookOpen, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/components/TutorialManager';
@@ -28,6 +28,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'home', label: 'Dashboard', icon: Home },
     { id: 'newcase', label: 'New Case', icon: FilePlus },
     { id: 'search', label: 'Find Codes', icon: Search },
+    { id: 'viewcases', label: 'View Cases', icon: FileText },
     { id: 'camera', label: 'Schedule Scanner', icon: Camera },
     { id: 'messages', label: 'Messages', icon: MessageSquare },
     { id: 'resident', label: 'Resident Tracker', icon: GraduationCap },

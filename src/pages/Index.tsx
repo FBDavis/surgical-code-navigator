@@ -5,6 +5,7 @@ import { Navigation } from '@/components/Navigation';
 import { Dashboard } from './Dashboard';
 import { SearchCodes } from './SearchCodes';
 import { NewCase } from './NewCase';
+import { ViewCases } from './ViewCases';
 import CameraSchedule from './CameraSchedule';
 import { Settings } from './Settings';
 import ResidentTracker from './ResidentTracker';
@@ -27,6 +28,8 @@ const Index = () => {
       setActiveTab('newcase');
     } else if (path === '/search-codes') {
       setActiveTab('search');
+    } else if (path === '/view-cases') {
+      setActiveTab('viewcases');
     } else if (path === '/camera-schedule') {
       setActiveTab('camera');
     } else if (path === '/resident-tracker') {
@@ -63,6 +66,9 @@ const Index = () => {
         break;
       case 'search':
         route = '/search-codes';
+        break;
+      case 'viewcases':
+        route = '/view-cases';
         break;
       case 'camera':
         route = '/camera-schedule';
@@ -149,6 +155,17 @@ const Index = () => {
             </div>
             <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
               <SearchCodes />
+            </div>
+          </div>
+        );
+      case 'viewcases':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <ViewCases />
             </div>
           </div>
         );
