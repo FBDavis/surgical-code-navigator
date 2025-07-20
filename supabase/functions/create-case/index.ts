@@ -83,6 +83,14 @@ serve(async (req) => {
     const estimatedValue = totalRvu * rvuRate
 
     // Create the case
+    console.log('Creating case for user:', user.id, 'with data:', {
+      user_id: user.id,
+      case_name: caseName,
+      procedure_description: procedureDescription,
+      total_rvu: totalRvu,
+      estimated_value: estimatedValue
+    });
+    
     const { data: newCase, error: caseError } = await supabase
       .from('cases')
       .insert({
@@ -99,7 +107,10 @@ serve(async (req) => {
       .select()
       .single()
 
+    console.log('Case creation result:', { newCase, caseError });
+    
     if (caseError || !newCase) {
+      console.error('Case creation failed:', caseError);
       throw new Error(`Failed to create case: ${caseError?.message}`)
     }
 
