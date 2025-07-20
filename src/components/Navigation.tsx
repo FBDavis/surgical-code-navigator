@@ -20,6 +20,8 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   
   const isGuest = searchParams.get('guest') === 'true';
   const isAuthenticated = !!user && !isGuest;
+  
+  console.log('Navigation auth state:', { user, isGuest, isAuthenticated });
 
   const tabs = [
     { id: 'home', label: 'Dashboard', icon: Home },

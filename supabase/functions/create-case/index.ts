@@ -52,8 +52,11 @@ serve(async (req) => {
 
     // Get user from JWT
     const { data: { user }, error: userError } = await supabase.auth.getUser()
+    console.log('Auth check result:', { user: user?.id, error: userError?.message, authHeader: authHeader?.substring(0, 20) + '...' })
+    
     if (userError || !user) {
-      throw new Error('Invalid authentication')
+      console.error('Authentication failed:', userError)
+      throw new Error(`Invalid authentication: ${userError?.message || 'No user found'}`)
     }
 
     const {
