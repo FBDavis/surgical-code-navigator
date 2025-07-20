@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +47,7 @@ export const NewCase = () => {
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
   const [caseData, setCaseData] = useState<CaseData>({
     case_name: 'New Case',
@@ -223,7 +224,16 @@ export const NewCase = () => {
 
       toast({
         title: "Case saved successfully",
-        description: `${caseData.case_name} has been saved with ${selectedCodes.length} codes`,
+        description: "Your case has been saved with " + selectedCodes.length + " codes",
+        action: (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/view-cases')}
+          >
+            View All Cases
+          </Button>
+        ),
       });
 
       // Reset form
@@ -274,7 +284,7 @@ export const NewCase = () => {
               <Button 
                 onClick={handleSaveCase} 
                 disabled={isSaving || selectedCodes.length === 0 || !caseData.case_name.trim()}
-                variant="outline" 
+                variant="default" 
                 size="sm"
               >
                 <Save className="h-4 w-4 mr-2" />
