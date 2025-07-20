@@ -20,20 +20,22 @@ const Index = () => {
 
   useEffect(() => {
     console.log('Auth check - user:', !!user, 'loading:', loading, 'isGuest:', isGuest);
-    console.log('User details:', user ? { id: user.id, email: user.email } : 'No user');
+    
+    // Don't do anything while loading
+    if (loading) return;
     
     // If user is logged in but URL still has guest=true, remove it
-    if (!loading && user && isGuest) {
+    if (user && isGuest) {
       console.log('Removing guest parameter for authenticated user');
       const currentParams = new URLSearchParams(searchParams);
       currentParams.delete('guest');
       const newUrl = location.pathname + (currentParams.toString() ? '?' + currentParams.toString() : '');
-      console.log('Navigating to:', newUrl);
       navigate(newUrl, { replace: true });
       return;
     }
     
-    if (!loading && !user && !isGuest) {
+    // Only set guest mode if no user and not already in guest mode
+    if (!user && !isGuest) {
       // Check if user explicitly wants to authenticate or is accessing a protected action
       const wantsAuth = searchParams.get('auth') === 'true';
       const needsAuth = location.pathname.includes('/new-case') || 
@@ -56,7 +58,7 @@ const Index = () => {
         navigate(newUrl, { replace: true });
       }
     }
-  }, [user, loading, navigate, searchParams, isGuest, location.pathname]);
+  }, [user, loading, isGuest, location.pathname]);
 
   useEffect(() => {
     // Set active tab based on current route
