@@ -67,8 +67,6 @@ const CameraCapture = ({
 
   const selectFromGallery = async () => {
     try {
-      setIsProcessing(true);
-      
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -77,6 +75,8 @@ const CameraCapture = ({
       });
 
       if (image.base64String) {
+        // Only start processing after successful image selection
+        setIsProcessing(true);
         setCapturedImage(`data:image/jpeg;base64,${image.base64String}`);
         
         // Extract text from the image
@@ -98,11 +98,14 @@ const CameraCapture = ({
       }
     } catch (error) {
       console.error("Error selecting image:", error);
-      toast({
-        title: "Error",
-        description: "Failed to select or process image. Please try again.",
-        variant: "destructive",
-      });
+      // Only show error if it's not a user cancellation
+      if (error.message && !error.message.includes('cancelled') && !error.message.includes('User cancelled')) {
+        toast({
+          title: "Error",
+          description: "Failed to select or process image. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsProcessing(false);
     }
