@@ -91,21 +91,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize session
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initializing auth...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('Session retrieved:', !!session, error);
         
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
+          console.log('User set:', !!session?.user, session?.user?.email);
           
           if (session?.user) {
             // Fetch user profile
-            const { data: profileData, error } = await supabase
+            const { data: profileData, error: profileError } = await supabase
               .from('profiles')
               .select('*')
               .eq('user_id', session.user.id)
               .single();
             
-            if (!error && profileData && mounted) {
+            console.log('Profile fetch:', !!profileData, profileError);
+            if (!profileError && profileData && mounted) {
               setProfile(profileData);
             }
           } else {

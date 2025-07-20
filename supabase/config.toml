@@ -60,6 +60,3 @@ verify_jwt = false
 
 [functions.chat-cpt-codes]
 verify_jwt = false
-
-[functions.create-case]
-verify_jwt = false
