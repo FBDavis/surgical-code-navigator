@@ -18,18 +18,10 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const isGuest = searchParams.get('guest') === 'true';
 
-  useEffect(() => {
-    // Don't do anything while loading
-    if (loading) return;
-    
-    // Simple guest mode check - if no user and no guest param, add guest param
-    if (!user && !isGuest) {
-      const currentParams = new URLSearchParams(searchParams);
-      currentParams.set('guest', 'true');
-      const newUrl = location.pathname + '?' + currentParams.toString();
-      navigate(newUrl, { replace: true });
-    }
-  }, [user, loading]);
+  // Temporarily disable authentication redirects to prevent loading loops
+  // useEffect(() => {
+  //   // Authentication logic disabled
+  // }, []);
 
   useEffect(() => {
     // Set active tab based on current route
