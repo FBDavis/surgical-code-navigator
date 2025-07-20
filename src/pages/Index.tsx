@@ -18,11 +18,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const isGuest = searchParams.get('guest') === 'true';
 
-  // Temporarily disable authentication redirects to prevent loading loops
-  // useEffect(() => {
-  //   // Authentication logic disabled
-  // }, []);
-
   useEffect(() => {
     // Set active tab based on current route
     const path = location.pathname;
@@ -43,7 +38,6 @@ const Index = () => {
     } else if (path === '/subscription') {
       setActiveTab('subscription');
     } else if (path === '/') {
-      // For root path, just set to home without redirecting to avoid loops
       setActiveTab('home');
     } else {
       // Check for tab parameter as fallback
@@ -97,7 +91,8 @@ const Index = () => {
     navigate(routeWithParams);
   };
 
-  if (loading) {
+  // Only show loading if we're not in guest mode and auth is actually loading
+  if (loading && !isGuest) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -108,7 +103,14 @@ const Index = () => {
     );
   }
 
-  if (!user && !isGuest) {
+  // Allow access if user exists OR if in guest mode
+  const hasAccess = user || isGuest;
+  
+  if (!hasAccess) {
+    // Only redirect to auth if we're not loading and not in guest mode
+    if (!loading) {
+      navigate('/auth');
+    }
     return null;
   }
 
