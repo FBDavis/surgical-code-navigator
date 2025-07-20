@@ -6,7 +6,8 @@ import { AddOnCodeFeedback } from '@/components/AddOnCodeFeedback';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, FileText, CheckCircle, MessageCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, FileText, CheckCircle, MessageCircle, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +43,7 @@ export const SearchCodes = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isAnalyzingDictation, setIsAnalyzingDictation] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<Record<string, boolean>>({});
+  const [showDictationTab, setShowDictationTab] = useState(false);
   const { toast } = useToast();
 
   // Mock CPT codes for demonstration
@@ -72,6 +74,7 @@ export const SearchCodes = () => {
   const handleSearch = async (text: string, type: 'voice' | 'photo' | 'text') => {
     setIsProcessing(true);
     setLastQuery(text);
+    setShowDictationTab(false); // Reset dictation tab when doing new search
 
     try {
       const { data, error } = await supabase.functions.invoke('search-cpt-codes', {
@@ -98,10 +101,7 @@ export const SearchCodes = () => {
         description: `Found ${response.primaryCodes?.length || 0} primary codes and ${response.associatedCodes?.length || 0} associated codes`,
       });
 
-      // If this is a real dictation (not just a photo capture), analyze for suggestions
-      if (type === 'text' && text.length > 50) {
-        handleAnalyzeDictation(text);
-      }
+      // Don't automatically analyze dictation - wait for user to select codes
     } catch (error) {
       console.error('Search error:', error);
       toast({
@@ -150,19 +150,33 @@ export const SearchCodes = () => {
 
   const handleAddCode = (code: CPTCode) => {
     if (!selectedCodes.find(c => c.code === code.code)) {
-      setSelectedCodes([...selectedCodes, code]);
+      const newSelectedCodes = [...selectedCodes, code];
+      setSelectedCodes(newSelectedCodes);
+      
+      // Show dictation tab when codes are first selected
+      if (selectedCodes.length === 0) {
+        setShowDictationTab(true);
+      }
+      
       toast({
         title: "Code Added",
-        description: `${code.code} added to your bill`,
+        description: `${code.code} added to case`,
       });
     }
   };
 
   const handleRemoveCode = (codeToRemove: string) => {
-    setSelectedCodes(selectedCodes.filter(code => code.code !== codeToRemove));
+    const newSelectedCodes = selectedCodes.filter(code => code.code !== codeToRemove);
+    setSelectedCodes(newSelectedCodes);
+    
+    // Hide dictation tab if no codes selected
+    if (newSelectedCodes.length === 0) {
+      setShowDictationTab(false);
+    }
+    
     toast({
       title: "Code Removed",
-      description: `${codeToRemove} removed from your bill`,
+      description: `${codeToRemove} removed from case`,
     });
   };
 
@@ -219,6 +233,43 @@ export const SearchCodes = () => {
 
   const handleCodeFeedback = (feedback: any) => {
     setFeedbackSubmitted({ ...feedbackSubmitted, [feedback.codeIndex]: true });
+  };
+
+  const handleGetDictationRecommendations = async () => {
+    if (selectedCodes.length === 0) return;
+    
+    setIsAnalyzingDictation(true);
+    try {
+      const codesString = selectedCodes.map(code => `${code.code} (${code.description})`).join(', ');
+      const prompt = `Provide brief documentation requirements for billing these CPT codes: ${codesString}. What key elements must be documented in the operative note or procedure documentation to support billing these codes?`;
+      
+      const { data, error } = await supabase.functions.invoke('chat-cpt-codes', {
+        body: { 
+          message: prompt,
+          procedureDescription: lastQuery,
+          selectedCodes: selectedCodes.map(c => c.code)
+        }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setDictationSuggestions({
+        documentationRequirements: data.response || data.message,
+        selectedCodes: selectedCodes
+      });
+      setShowSuggestions(true);
+      
+    } catch (error) {
+      console.error('Error getting dictation recommendations:', error);
+      toast({
+        title: "Failed to Get Recommendations",
+        description: "Unable to get dictation recommendations. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzingDictation(false);
+    }
   };
 
   const totalRVUs = selectedCodes.reduce((sum, code) => sum + code.rvu, 0);
@@ -407,52 +458,90 @@ export const SearchCodes = () => {
         <Card className="p-6 bg-gradient-to-br from-success/5 to-success/10 border-success/20">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="w-5 h-5 text-success" />
-            <h2 className="text-lg font-semibold text-card-foreground">Selected for Billing</h2>
+            <h2 className="text-lg font-semibold text-card-foreground">Selected Case Codes</h2>
           </div>
           
-          <div className="space-y-3">
-            {selectedCodes.map((code) => (
-              <div key={code.code} className="flex items-center justify-between p-3 bg-card rounded-lg border border-success/20">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="font-mono border-success text-success">
-                    {code.code}
-                  </Badge>
-                  <span className="text-sm text-card-foreground">{code.description}</span>
+          <Tabs defaultValue="codes" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="codes">Selected Codes</TabsTrigger>
+              <TabsTrigger value="dictation" disabled={!showDictationTab}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                Dictation Requirements
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="codes" className="space-y-3">
+              <div className="space-y-3">
+                {selectedCodes.map((code) => (
+                  <div key={code.code} className="flex items-center justify-between p-3 bg-card rounded-lg border border-success/20">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="font-mono border-success text-success">
+                        {code.code}
+                      </Badge>
+                      <span className="text-sm text-card-foreground">{code.description}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-success">{code.rvu} RVU</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveCode(code.code)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-success/20">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-card-foreground">Total RVUs:</span>
+                  <span className="text-xl font-bold text-success">{totalRVUs.toFixed(2)}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-success">{code.rvu} RVU</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveCode(code.code)}
-                    className="text-muted-foreground hover:text-destructive"
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-sm text-muted-foreground">Estimated Value:</span>
+                  <span className="text-lg font-semibold text-success">${(totalRVUs * 52).toFixed(2)}</span>
+                </div>
+                <div className="mt-4">
+                  <Button 
+                    onClick={handleCreateCase}
+                    disabled={isCreatingCase}
+                    className="w-full"
                   >
-                    Remove
+                    {isCreatingCase ? 'Creating Case...' : 'Create Case with Selected Codes'}
                   </Button>
                 </div>
               </div>
-            ))}
-          </div>
-          
-          <div className="mt-4 pt-4 border-t border-success/20">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-card-foreground">Total RVUs:</span>
-              <span className="text-xl font-bold text-success">{totalRVUs.toFixed(2)}</span>
-            </div>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-sm text-muted-foreground">Estimated Value:</span>
-              <span className="text-lg font-semibold text-success">${(totalRVUs * 52).toFixed(2)}</span>
-            </div>
-            <div className="mt-4">
-              <Button 
-                onClick={handleCreateCase}
-                disabled={isCreatingCase}
-                className="w-full"
-              >
-                {isCreatingCase ? 'Creating Case...' : 'Create Case with Selected Codes'}
-              </Button>
-            </div>
-          </div>
+            </TabsContent>
+            
+            <TabsContent value="dictation" className="space-y-4">
+              {!showSuggestions ? (
+                <div className="text-center py-8">
+                  <Button 
+                    onClick={handleGetDictationRecommendations}
+                    disabled={isAnalyzingDictation}
+                    className="mb-4"
+                  >
+                    {isAnalyzingDictation ? 'Getting Recommendations...' : 'Get Documentation Requirements'}
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Get AI-powered documentation requirements for your selected codes
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <h3 className="font-medium text-foreground">Documentation Requirements</h3>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200/50">
+                    <div className="text-sm text-foreground whitespace-pre-wrap">
+                      {dictationSuggestions?.documentationRequirements}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </Card>
       )}
 

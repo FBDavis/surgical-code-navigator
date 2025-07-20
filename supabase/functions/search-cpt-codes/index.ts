@@ -127,7 +127,13 @@ Order the results by billing priority and RVU value from highest to lowest.`
     
     const associatedPrompt = `You are a medical coding expert specializing in ${specialty ? specialty.replace('_', ' ') : 'general medicine'}. Given these PRIMARY CPT codes: ${primaryCodesStr}${specialtyAssociatedContext}
 
-Please identify COMMONLY ASSOCIATED CPT codes that are frequently billed together with these primary procedures.
+Please identify COMMONLY ASSOCIATED CPT codes that are frequently billed together with these SPECIFIC primary procedures.
+
+CRITICAL REQUIREMENTS:
+1. Only suggest codes that are anatomically and procedurally COMPATIBLE with the primary procedure
+2. DO NOT suggest codes for different anatomical locations (e.g., if primary is hip surgery, do NOT suggest knee codes)
+3. Focus on the SAME ANATOMICAL REGION and SAME OPERATIVE SESSION
+4. Verify codes are procedurally appropriate for the same surgical approach
 
 ADVANCED ANALYSIS REQUIRED:
 1. Check CCI bundling rules between primary and associated codes
@@ -137,11 +143,16 @@ ADVANCED ANALYSIS REQUIRED:
 5. Evaluate add-on codes (+) that don't require modifier -51
 6. Check for Medicare coverage limitations and LCD requirements
 
-Associated codes should include:
-- Complementary procedures often performed simultaneously
-- Common add-on procedures 
-- Procedures that enhance the primary procedure's value
-- Diagnostic procedures supporting the primary procedure
+Associated codes should include ONLY:
+- Complementary procedures performed on the SAME anatomical area
+- Add-on procedures specific to the primary procedure type
+- Diagnostic procedures directly supporting the SAME anatomical procedure
+- Closure/reconstruction codes for the SAME surgical site
+
+EXCLUDE:
+- Procedures on different anatomical locations
+- Unrelated surgical specialties
+- Procedures requiring separate incisions on different body parts
 
 For each associated code, provide:
 1. The CPT code number
