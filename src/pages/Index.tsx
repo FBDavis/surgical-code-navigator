@@ -21,6 +21,15 @@ const Index = () => {
   useEffect(() => {
     console.log('Auth check - user:', !!user, 'loading:', loading, 'isGuest:', isGuest);
     
+    // If user is logged in but URL still has guest=true, remove it
+    if (!loading && user && isGuest) {
+      const currentParams = new URLSearchParams(searchParams);
+      currentParams.delete('guest');
+      const newUrl = location.pathname + (currentParams.toString() ? '?' + currentParams.toString() : '');
+      navigate(newUrl, { replace: true });
+      return;
+    }
+    
     if (!loading && !user && !isGuest) {
       // Check if user explicitly wants to authenticate or is accessing a protected action
       const wantsAuth = searchParams.get('auth') === 'true';
