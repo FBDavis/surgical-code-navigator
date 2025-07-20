@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,7 +52,9 @@ export const RealTimeAnalyzer = ({
 }: RealTimeAnalyzerProps) => {
   const [analysis, setAnalysis] = useState<DocumentationAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   
   // Debounce dictation text to avoid too many API calls
   const debouncedText = useDebounce(dictationText, 2000);
@@ -109,6 +112,44 @@ export const RealTimeAnalyzer = ({
     }
   }, [selectedCodes, specialty, onAnalysisUpdate]);
 
+  const getDictationSuggestions = useCallback(async () => {
+    if (!dictationText.trim() || dictationText.length < 100) {
+      return;
+    }
+
+    setIsGettingSuggestions(true);
+    setError(null);
+
+    try {
+      // Re-analyze the dictation to get fresh suggestions
+      const { data, error } = await supabase.functions.invoke('analyze-documentation', {
+        body: { 
+          dictationText,
+          selectedCodes,
+          specialty
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Update the analysis with fresh data
+      setAnalysis(data);
+      setShowSuggestions(true);
+      onAnalysisUpdate(data);
+    } catch (err) {
+      console.error('Error getting dictation suggestions:', err);
+      setError(err.message || 'Failed to get dictation suggestions');
+    } finally {
+      setIsGettingSuggestions(false);
+    }
+  }, [dictationText, selectedCodes, specialty, onAnalysisUpdate]);
+
   useEffect(() => {
     analyzeDocumentation(debouncedText);
   }, [debouncedText, analyzeDocumentation]);
@@ -139,12 +180,14 @@ export const RealTimeAnalyzer = ({
     }
   };
 
-  if (isAnalyzing) {
+  if (isAnalyzing || isGettingSuggestions) {
     return (
       <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <div className="flex items-center gap-2">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-          <span className="text-sm text-muted-foreground">Analyzing documentation...</span>
+          <span className="text-sm text-muted-foreground">
+            {isAnalyzing ? 'Analyzing documentation...' : 'Getting dictation suggestions...'}
+          </span>
         </div>
       </Card>
     );
@@ -181,8 +224,19 @@ export const RealTimeAnalyzer = ({
               }
             </p>
           </div>
-          <div className="text-2xl font-bold text-green-700">
-            {analysis.completenessScore}%
+          <div className="flex items-center gap-3">
+            <div className="text-2xl font-bold text-green-700">
+              {analysis.completenessScore}%
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={getDictationSuggestions}
+              disabled={isGettingSuggestions}
+              className="text-green-700 border-green-300 hover:bg-green-50"
+            >
+              {isGettingSuggestions ? 'Getting...' : 'Dictation Suggestions'}
+            </Button>
           </div>
         </div>
       </Card>
@@ -197,9 +251,11 @@ export const RealTimeAnalyzer = ({
               {criticalIssues.map((issue, index) => (
                 <div key={index} className="text-sm">
                   <strong>{issue.field}:</strong> {issue.message}
-                  <div className="text-xs text-muted-foreground mt-1">
-                    💡 {issue.suggestion}
-                  </div>
+                  {showSuggestions && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      💡 {issue.suggestion}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -207,10 +263,20 @@ export const RealTimeAnalyzer = ({
         </Alert>
       )}
 
-      {/* All Issues */}
-      {analysis.issues.length > 0 && (
+      {/* All Issues - Only show suggestions when requested */}
+      {analysis.issues.length > 0 && showSuggestions && (
         <Card className="p-4">
-          <h3 className="font-medium mb-3">Documentation Issues ({analysis.issues.length})</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium">Documentation Issues ({analysis.issues.length})</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSuggestions(false)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Hide Suggestions
+            </Button>
+          </div>
           <div className="space-y-3">
             {analysis.issues.map((issue, index) => (
               <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
@@ -242,8 +308,8 @@ export const RealTimeAnalyzer = ({
         </Card>
       )}
 
-      {/* Required Modifiers */}
-      {analysis.requiredModifiers.length > 0 && (
+      {/* Required Modifiers - Only show when suggestions are active */}
+      {analysis.requiredModifiers.length > 0 && showSuggestions && (
         <Card className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
           <h3 className="font-medium text-amber-800 mb-2">Required Modifiers</h3>
           <div className="space-y-2">
@@ -258,8 +324,8 @@ export const RealTimeAnalyzer = ({
         </Card>
       )}
 
-      {/* Compliance Warnings */}
-      {analysis.complianceWarnings.length > 0 && (
+      {/* Compliance Warnings - Only show when suggestions are active */}
+      {analysis.complianceWarnings.length > 0 && showSuggestions && (
         <Card className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border-red-200">
           <h3 className="font-medium text-red-800 mb-2">Compliance Warnings</h3>
           <div className="space-y-2">
@@ -275,8 +341,8 @@ export const RealTimeAnalyzer = ({
         </Card>
       )}
 
-      {/* Missing Elements */}
-      {analysis.missingElements.length > 0 && (
+      {/* Missing Elements - Only show when suggestions are active */}
+      {analysis.missingElements.length > 0 && showSuggestions && (
         <Card className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
           <h3 className="font-medium text-blue-800 mb-2">Missing Documentation Elements</h3>
           <div className="flex flex-wrap gap-2">
