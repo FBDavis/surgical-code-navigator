@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, Camera, MessageSquare, GraduationCap, Crown, Trophy, BookOpen } from 'lucide-react';
+import { Home, Search, BarChart3, Settings, Menu, X, FilePlus, LogOut, LogIn, Camera, MessageSquare, GraduationCap, Crown, Trophy, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/components/TutorialManager';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 interface NavigationProps {
   activeTab: string;
@@ -12,8 +13,13 @@ interface NavigationProps {
 
 export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { startTutorial } = useTutorial();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  const isGuest = searchParams.get('guest') === 'true';
+  const isAuthenticated = !!user && !isGuest;
 
   const tabs = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -28,8 +34,14 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  const handleLogout = async () => {
-    await signOut();
+  const handleAuthAction = async () => {
+    if (isAuthenticated) {
+      // User is logged in, log them out
+      await signOut();
+    } else {
+      // User is not logged in (guest or no auth), redirect to auth page
+      navigate('/auth');
+    }
   };
 
   const startAppTutorial = () => {
@@ -185,11 +197,25 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
               <div className="border-t pt-2 mt-2">
                 <Button
                   variant="ghost"
-                  onClick={handleLogout}
-                  className="w-full justify-start h-11 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={handleAuthAction}
+                  className={cn(
+                    "w-full justify-start h-11",
+                    isAuthenticated 
+                      ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                      : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  )}
                 >
-                  <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
-                  <span>Logout</span>
+                  {isAuthenticated ? (
+                    <>
+                      <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
+                      <span>Logout</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="w-4 h-4 mr-3 flex-shrink-0" />
+                      <span>Login</span>
+                    </>
+                  )}
                 </Button>
               </div>
           </div>
@@ -237,15 +263,29 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
               </div>
             </nav>
             
-            {/* Logout Button at Bottom */}
+            {/* Auth Button at Bottom */}
             <div className="px-2 pb-2">
               <Button
                 variant="ghost"
-                onClick={handleLogout}
-                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleAuthAction}
+                className={cn(
+                  "w-full justify-start",
+                  isAuthenticated 
+                    ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                    : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                )}
               >
-                <LogOut className="w-5 h-5 mr-3" />
-                Logout
+                {isAuthenticated ? (
+                  <>
+                    <LogOut className="w-5 h-5 mr-3" />
+                    Logout
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-5 h-5 mr-3" />
+                    Login
+                  </>
+                )}
               </Button>
             </div>
           </div>
