@@ -106,11 +106,14 @@ const Index = () => {
   // Allow access if user exists OR if in guest mode
   const hasAccess = user || isGuest;
   
-  if (!hasAccess) {
-    // Only redirect to auth if we're not loading and not in guest mode
-    if (!loading) {
+  // Use useEffect to handle navigation to prevent render phase updates
+  useEffect(() => {
+    if (!hasAccess && !loading) {
       navigate('/auth');
     }
+  }, [hasAccess, loading, navigate]);
+  
+  if (!hasAccess) {
     return null;
   }
 
