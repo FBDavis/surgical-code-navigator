@@ -67,6 +67,7 @@ const CameraCapture = ({
 
   const selectFromGallery = async () => {
     try {
+      console.log("1. Starting gallery selection...");
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -74,21 +75,26 @@ const CameraCapture = ({
         source: CameraSource.Photos,
       });
 
+      console.log("2. Image selected:", !!image.base64String);
       if (image.base64String) {
         // Only start processing after successful image selection
         setIsProcessing(true);
+        console.log("3. Starting processing...");
         setCapturedImage(`data:image/jpeg;base64,${image.base64String}`);
         
         // Extract text from the image
+        console.log("4. Calling extract-text-from-image function...");
         const { data, error } = await supabase.functions.invoke('extract-text-from-image', {
           body: { imageBase64: image.base64String }
         });
 
+        console.log("5. Function response:", { data, error });
         if (error) {
           throw new Error(error.message);
         }
 
         const extractedText = data?.extractedText || '';
+        console.log("6. Extracted text:", extractedText);
         onImageCaptured(`data:image/jpeg;base64,${image.base64String}`, extractedText);
         
         toast({
@@ -107,6 +113,7 @@ const CameraCapture = ({
         });
       }
     } finally {
+      console.log("7. Finished processing, setting isProcessing to false");
       setIsProcessing(false);
     }
   };
