@@ -190,16 +190,6 @@ export const SearchCodes = () => {
       return;
     }
 
-    // Check if user is authenticated
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to create and save cases.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsCreatingCase(true);
 
     try {
