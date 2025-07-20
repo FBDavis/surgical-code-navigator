@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DictationCard } from '@/components/DictationCard';
 import { CPTCodeCard } from '@/components/CPTCodeCard';
 import { ChatInterface } from '@/components/ChatInterface';
@@ -7,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, FileText, CheckCircle, MessageCircle, BookOpen } from 'lucide-react';
+import { Search, FileText, CheckCircle, MessageCircle, BookOpen, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,13 +33,13 @@ interface SearchResponse {
 
 export const SearchCodes = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [primaryCodes, setPrimaryCodes] = useState<CPTCode[]>([]);
   const [associatedCodes, setAssociatedCodes] = useState<CPTCode[]>([]);
   const [selectedCodes, setSelectedCodes] = useState<CPTCode[]>([]);
   const [lastQuery, setLastQuery] = useState('');
   const [showChat, setShowChat] = useState(false);
-  const [isCreatingCase, setIsCreatingCase] = useState(false);
   const [dictationSuggestions, setDictationSuggestions] = useState<any>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isAnalyzingDictation, setIsAnalyzingDictation] = useState(false);
@@ -180,7 +181,7 @@ export const SearchCodes = () => {
     });
   };
 
-  const handleCreateCase = async () => {
+  const handleCreateCase = () => {
     if (selectedCodes.length === 0) {
       toast({
         title: "No Codes Selected",
@@ -190,46 +191,14 @@ export const SearchCodes = () => {
       return;
     }
 
-    setIsCreatingCase(true);
-
-    try {
-      const caseName = `Case - ${lastQuery.substring(0, 50)}${lastQuery.length > 50 ? '...' : ''}`;
-      
-      const { data, error } = await supabase.functions.invoke('create-case', {
-        body: {
-          caseName,
-          procedureDescription: lastQuery,
-          codes: selectedCodes
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      toast({
-        title: "Case Created Successfully",
-        description: data.message,
-      });
-
-      // Clear selected codes after successful case creation
-      setSelectedCodes([]);
-      setShowDictationTab(false);
-
-    } catch (error) {
-      console.error('Create case error:', error);
-      toast({
-        title: "Failed to Create Case",
-        description: error.message || "Unable to create case. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingCase(false);
-    }
+    // Navigate to New Case page with pre-populated codes
+    navigate('/new-case', { 
+      state: { 
+        codes: selectedCodes,
+        procedureDescription: lastQuery,
+        caseName: `Case - ${lastQuery.substring(0, 50)}${lastQuery.length > 50 ? '...' : ''}`
+      } 
+    });
   };
 
   const handleCodeFeedback = (feedback: any) => {
@@ -506,13 +475,14 @@ export const SearchCodes = () => {
                   <span className="text-lg font-semibold text-success">${(totalRVUs * 52).toFixed(2)}</span>
                 </div>
                 <div className="mt-4">
-                  <Button 
-                    onClick={handleCreateCase}
-                    disabled={isCreatingCase}
-                    className="w-full"
-                  >
-                    {isCreatingCase ? 'Creating Case...' : 'Create Case with Selected Codes'}
-                  </Button>
+                <Button 
+                  onClick={handleCreateCase}
+                  className="w-full"
+                  disabled={selectedCodes.length === 0}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Case
+                </Button>
                 </div>
               </div>
             </TabsContent>

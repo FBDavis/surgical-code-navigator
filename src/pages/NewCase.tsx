@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ interface CaseData {
 export const NewCase = () => {
   const { toast } = useToast();
   const { user, profile } = useAuth();
+  const location = useLocation();
   
   const [caseData, setCaseData] = useState<CaseData>({
     case_name: 'New Case',
@@ -57,6 +59,25 @@ export const NewCase = () => {
   const [showChat, setShowChat] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
   const [rvuRate, setRvuRate] = useState<number>(profile?.default_rvu_rate || 65);
+
+  // Handle pre-populated codes from navigation state
+  useEffect(() => {
+    if (location.state?.codes) {
+      setSelectedCodes(location.state.codes);
+      if (location.state.procedureDescription) {
+        setCaseData(prev => ({
+          ...prev,
+          procedure_description: location.state.procedureDescription
+        }));
+      }
+      if (location.state.caseName) {
+        setCaseData(prev => ({
+          ...prev,
+          case_name: location.state.caseName
+        }));
+      }
+    }
+  }, [location.state]);
 
   // Update RVU rate when profile loads
   useEffect(() => {
