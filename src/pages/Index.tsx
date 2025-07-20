@@ -119,7 +119,8 @@ const Index = () => {
     }
   }, [hasAccess, loading, navigate]);
   
-  if (!hasAccess) {
+  // Early return after all hooks have been called
+  if (!hasAccess && !loading) {
     return null;
   }
 
