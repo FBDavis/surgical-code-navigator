@@ -20,12 +20,15 @@ const Index = () => {
 
   useEffect(() => {
     console.log('Auth check - user:', !!user, 'loading:', loading, 'isGuest:', isGuest);
+    console.log('User details:', user ? { id: user.id, email: user.email } : 'No user');
     
     // If user is logged in but URL still has guest=true, remove it
     if (!loading && user && isGuest) {
+      console.log('Removing guest parameter for authenticated user');
       const currentParams = new URLSearchParams(searchParams);
       currentParams.delete('guest');
       const newUrl = location.pathname + (currentParams.toString() ? '?' + currentParams.toString() : '');
+      console.log('Navigating to:', newUrl);
       navigate(newUrl, { replace: true });
       return;
     }
