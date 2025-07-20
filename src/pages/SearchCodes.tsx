@@ -190,11 +190,13 @@ export const SearchCodes = () => {
       return;
     }
 
-    // Check if user is authenticated
-    if (!user) {
+    // Check authentication status directly from Supabase
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to create and save cases.",
+        description: "Please sign in to create and save cases. If you're already logged in, try refreshing the page.",
         variant: "destructive",
       });
       return;
