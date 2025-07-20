@@ -586,6 +586,7 @@ export type Database = {
       profiles: {
         Row: {
           board_certification: string[] | null
+          completed_onboarding: boolean | null
           created_at: string
           default_rvu_rate: number | null
           display_name: string | null
@@ -595,6 +596,7 @@ export type Database = {
           license_number: string | null
           onboarding_completed: boolean | null
           practice_name: string | null
+          show_tutorial_on_startup: boolean | null
           specialty_id: string | null
           specialty_theme: Json | null
           subspecialty: string | null
@@ -605,6 +607,7 @@ export type Database = {
         }
         Insert: {
           board_certification?: string[] | null
+          completed_onboarding?: boolean | null
           created_at?: string
           default_rvu_rate?: number | null
           display_name?: string | null
@@ -614,6 +617,7 @@ export type Database = {
           license_number?: string | null
           onboarding_completed?: boolean | null
           practice_name?: string | null
+          show_tutorial_on_startup?: boolean | null
           specialty_id?: string | null
           specialty_theme?: Json | null
           subspecialty?: string | null
@@ -624,6 +628,7 @@ export type Database = {
         }
         Update: {
           board_certification?: string[] | null
+          completed_onboarding?: boolean | null
           created_at?: string
           default_rvu_rate?: number | null
           display_name?: string | null
@@ -633,6 +638,7 @@ export type Database = {
           license_number?: string | null
           onboarding_completed?: boolean | null
           practice_name?: string | null
+          show_tutorial_on_startup?: boolean | null
           specialty_id?: string | null
           specialty_theme?: Json | null
           subspecialty?: string | null

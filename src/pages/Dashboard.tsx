@@ -48,17 +48,25 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   useEffect(() => {
     setMounted(true);
     
-    // Check if this is a new user and show tutorial hub, but only if not currently in a tutorial
-    const hasSeenOnboarding = localStorage.getItem(`onboarding-seen-${user?.id}`);
-    const isNewUser = !hasSeenOnboarding && user && completedTutorials.length === 0;
+    // Check if user wants tutorial on startup and hasn't seen onboarding
+    const checkTutorialPreference = async () => {
+      if (user && completedTutorials.length === 0) {
+        const hasSeenOnboarding = localStorage.getItem(`onboarding-seen-${user.id}`);
+        
+        // Check user's preference from their profile (defaults to true if not set)
+        const showTutorialOnStartup = (profile as any)?.show_tutorial_on_startup !== false;
+        
+        if (showTutorialOnStartup && !hasSeenOnboarding) {
+          // Delay to allow UI to settle
+          setTimeout(() => {
+            setShowTutorialHub(true);
+            localStorage.setItem(`onboarding-seen-${user.id}`, 'true');
+          }, 2000); // Increased delay to prevent conflicts
+        }
+      }
+    };
     
-    if (isNewUser) {
-      // Delay to allow UI to settle
-      setTimeout(() => {
-        setShowTutorialHub(true);
-        localStorage.setItem(`onboarding-seen-${user.id}`, 'true');
-      }, 2000); // Increased delay to prevent conflicts
-    }
+    checkTutorialPreference();
     
     // Show referral banner for subscribed users after some interaction
     if (subscriptionStatus?.subscribed && user) {
@@ -68,7 +76,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
       
       return () => clearTimeout(timer);
     }
-  }, [user, completedTutorials, subscriptionStatus]);
+  }, [user, profile, completedTutorials, subscriptionStatus]);
 
   // Start with zero data for new accounts
   const totalSearches = 0;
