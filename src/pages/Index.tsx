@@ -19,46 +19,17 @@ const Index = () => {
   const isGuest = searchParams.get('guest') === 'true';
 
   useEffect(() => {
-    console.log('Auth check - user:', !!user, 'loading:', loading, 'isGuest:', isGuest);
-    
     // Don't do anything while loading
     if (loading) return;
     
-    // If user is logged in but URL still has guest=true, remove it
-    if (user && isGuest) {
-      console.log('Removing guest parameter for authenticated user');
-      const currentParams = new URLSearchParams(searchParams);
-      currentParams.delete('guest');
-      const newUrl = location.pathname + (currentParams.toString() ? '?' + currentParams.toString() : '');
-      navigate(newUrl, { replace: true });
-      return;
-    }
-    
-    // Only set guest mode if no user and not already in guest mode
+    // Simple guest mode check - if no user and no guest param, add guest param
     if (!user && !isGuest) {
-      // Check if user explicitly wants to authenticate or is accessing a protected action
-      const wantsAuth = searchParams.get('auth') === 'true';
-      const needsAuth = location.pathname.includes('/new-case') || 
-                        location.pathname.includes('/search-codes') ||
-                        location.pathname.includes('/settings') ||
-                        location.pathname.includes('/resident-tracker');
-      
-      if (wantsAuth || needsAuth) {
-        console.log('Redirecting to auth');
-        const currentPath = location.pathname;
-        const currentParams = searchParams.toString();
-        const returnTo = encodeURIComponent(currentPath + (currentParams ? `?${currentParams}` : ''));
-        const authUrl = `/auth?returnTo=${returnTo}`;
-        navigate(authUrl);
-      } else {
-        // Show auth option for better UX
-        const currentParams = new URLSearchParams(searchParams);
-        currentParams.set('guest', 'true');
-        const newUrl = location.pathname + '?' + currentParams.toString();
-        navigate(newUrl, { replace: true });
-      }
+      const currentParams = new URLSearchParams(searchParams);
+      currentParams.set('guest', 'true');
+      const newUrl = location.pathname + '?' + currentParams.toString();
+      navigate(newUrl, { replace: true });
     }
-  }, [user, loading, isGuest, location.pathname]);
+  }, [user, loading]);
 
   useEffect(() => {
     // Set active tab based on current route
