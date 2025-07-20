@@ -190,6 +190,16 @@ export const SearchCodes = () => {
       return;
     }
 
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create and save cases.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCreatingCase(true);
 
     try {
@@ -218,6 +228,7 @@ export const SearchCodes = () => {
 
       // Clear selected codes after successful case creation
       setSelectedCodes([]);
+      setShowDictationTab(false);
 
     } catch (error) {
       console.error('Create case error:', error);
