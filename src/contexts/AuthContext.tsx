@@ -137,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
+          setLoading(false); // Always set loading to false when auth state changes
           
           if (session?.user) {
             // Fetch user profile
