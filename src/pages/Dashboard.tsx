@@ -195,6 +195,12 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
         case 'settings':
           navigate('/?tab=settings');
           break;
+        case 'common':
+          navigate('/?tab=common');
+          break;
+        case 'procedures':
+          navigate('/?tab=procedures');
+          break;
         default:
           navigate('/');
       }
@@ -381,7 +387,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             title="Common Procedures"
             description="Access your most frequently used CPT codes and procedures"
             icon={History}
-            onClick={() => {}}
+            onClick={() => handleNavigation('common')}
             count={dashboardData.topCodes.length}
             gradient="from-green-500/20 to-green-600/5"
           />
@@ -390,7 +396,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             title="Total Procedure Count"
             description="View comprehensive statistics and procedure analytics"
             icon={FileText}
-            onClick={() => {}}
+            onClick={() => handleNavigation('procedures')}
             count={dashboardData.thisMonthCases}
             gradient="from-purple-500/20 to-purple-600/5"
           />
@@ -421,7 +427,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 title="Common"
                 description="Most used codes"
                 icon={History}
-                onClick={() => {}}
+                onClick={() => handleNavigation('common')}
                 count={dashboardData.topCodes.length}
                 gradient="from-green-500/20 to-green-600/5"
               />
@@ -440,7 +446,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 title="Procedures"
                 description="This month"
                 icon={FileText}
-                onClick={() => {}}
+                onClick={() => handleNavigation('procedures')}
                 count={dashboardData.thisMonthCases}
                 gradient="from-purple-500/20 to-purple-600/5"
               />

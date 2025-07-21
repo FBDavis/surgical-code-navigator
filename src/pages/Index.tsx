@@ -9,6 +9,9 @@ import { ViewCases } from './ViewCases';
 import CameraSchedule from './CameraSchedule';
 import { Settings } from './Settings';
 import ResidentTracker from './ResidentTracker';
+import { Analytics } from './Analytics';
+import { CommonProcedures } from './CommonProcedures';
+import { ProcedureCount } from './ProcedureCount';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
@@ -87,6 +90,15 @@ const Index = () => {
         break;
       case 'settings':
         route = '/settings';
+        break;
+      case 'analytics':
+        route = '/?tab=analytics';
+        break;
+      case 'common':
+        route = '/?tab=common';
+        break;
+      case 'procedures':
+        route = '/?tab=procedures';
         break;
       default:
         route = '/dashboard';
@@ -220,10 +232,29 @@ const Index = () => {
               <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
             <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
-              <div className="text-center py-8 md:py-12">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">Analytics Dashboard</h2>
-                <p className="text-sm md:text-base text-muted-foreground">Detailed RVU analytics and reporting coming soon...</p>
-              </div>
+              <Analytics />
+            </div>
+          </div>
+        );
+      case 'common':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <CommonProcedures />
+            </div>
+          </div>
+        );
+      case 'procedures':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <ProcedureCount />
             </div>
           </div>
         );
