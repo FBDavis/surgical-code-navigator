@@ -17,9 +17,14 @@ const Index = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('home');
+  
+  // Calculate isGuest and hasAccess at the top to avoid conditional logic
   const isGuest = searchParams.get('guest') === 'true';
+  const hasAccess = user || isGuest;
 
+  // Always call hooks in the same order
   useEffect(() => {
+    console.log('Index useEffect 1 - Setting active tab');
     // Set active tab based on current route
     const path = location.pathname;
     if (path === '/dashboard') {
@@ -53,7 +58,16 @@ const Index = () => {
     }
   }, [location.pathname, searchParams]);
 
+  useEffect(() => {
+    console.log('Index useEffect 2 - Navigation check', { hasAccess, loading });
+    if (!hasAccess && !loading) {
+      console.log('Redirecting to auth');
+      navigate('/auth');
+    }
+  }, [hasAccess, loading, navigate]);
+
   const handleTabChange = (tab: string) => {
+    console.log('Handling tab change:', tab);
     const params = new URLSearchParams(searchParams);
     let route = '/';
     
@@ -97,8 +111,9 @@ const Index = () => {
     navigate(routeWithParams);
   };
 
-  // Only show loading if we're not in guest mode and auth is actually loading
+  // Show loading if we're not in guest mode and auth is actually loading
   if (loading && !isGuest) {
+    console.log('Showing loading screen');
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -108,18 +123,9 @@ const Index = () => {
       </div>
     );
   }
-
-  // Allow access if user exists OR if in guest mode
-  const hasAccess = user || isGuest;
-  
-  // Use useEffect to handle navigation to prevent render phase updates
-  useEffect(() => {
-    if (!hasAccess && !loading) {
-      navigate('/auth');
-    }
-  }, [hasAccess, loading, navigate]);
   
   if (!hasAccess) {
+    console.log('No access, returning null');
     return null;
   }
 

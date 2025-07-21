@@ -100,23 +100,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session?.user ?? null);
           console.log('User set:', !!session?.user, session?.user?.email);
           
+          // Always set loading to false after getting session
+          setLoading(false);
+          
           if (session?.user) {
-            // Fetch user profile
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            console.log('Profile fetch:', !!profileData, profileError);
-            if (!profileError && profileData && mounted) {
-              setProfile(profileData);
-            }
+            // Fetch user profile separately, don't block loading on this
+            setTimeout(async () => {
+              if (!mounted) return;
+              
+              const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              console.log('Profile fetch:', !!profileData, profileError);
+              if (!profileError && profileData && mounted) {
+                setProfile(profileData);
+              }
+            }, 0);
           } else {
             setProfile(null);
           }
-          
-          setLoading(false);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
