@@ -64,7 +64,20 @@ const TutorialContext = createContext<TutorialContextType | null>(null);
 export const useTutorial = () => {
   const context = useContext(TutorialContext);
   if (!context) {
-    throw new Error('useTutorial must be used within TutorialProvider');
+    console.warn('useTutorial called outside TutorialProvider - returning default values');
+    // Return safe defaults instead of throwing error
+    return {
+      activeTutorial: null,
+      currentStep: 0,
+      isActive: false,
+      completedTutorials: [],
+      startTutorial: () => {},
+      nextStep: () => {},
+      prevStep: () => {},
+      skipTutorial: () => {},
+      completeTutorial: () => {},
+      markCompleted: () => {},
+    };
   }
   return context;
 };
@@ -79,7 +92,17 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [completedTutorials, setCompletedTutorials] = useState<string[]>([]);
-  const { user, profile } = useAuth();
+  
+  // Safely use auth with fallback
+  let user = null;
+  let profile = null;
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    profile = auth.profile;
+  } catch (error) {
+    console.warn('TutorialProvider: Auth context not available');
+  }
 
   // Load completed tutorials from localStorage
   useEffect(() => {
