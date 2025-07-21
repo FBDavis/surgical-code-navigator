@@ -44,7 +44,13 @@ const Index = () => {
     } else if (path === '/subscription') {
       setActiveTab('subscription');
     } else if (path === '/') {
-      setActiveTab('home');
+      // For root path, check for tab parameter first
+      const tab = searchParams.get('tab');
+      if (tab) {
+        setActiveTab(tab);
+      } else {
+        setActiveTab('home');
+      }
     } else {
       // Check for tab parameter as fallback
       const tab = searchParams.get('tab');
