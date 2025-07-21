@@ -1,34 +1,23 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-const logStep = (step: string, details?: any) => {
-  console.log(`${step}${details ? `: ${JSON.stringify(details, null, 2)}` : ''}`);
-};
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    )
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not found');
-    }
-
-    const { user_id, week_start, week_end } = await req.json();
-    logStep('Starting weekly AI assessment', { user_id, week_start, week_end });
+    const { user_id, week_start, week_end } = await req.json()
 
     // Get user's cases for the week
     const { data: cases, error: casesError } = await supabaseClient
@@ -45,237 +34,268 @@ serve(async (req) => {
       `)
       .eq('user_id', user_id)
       .gte('procedure_date', week_start)
-      .lte('procedure_date', week_end);
+      .lte('procedure_date', week_end)
 
-    if (casesError) {
-      logStep('Error fetching cases', casesError);
-      throw casesError;
-    }
-
-    logStep('Fetched cases', { count: cases?.length || 0 });
-
-    // Get user profile for context
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user_id)
-      .single();
+    if (casesError) throw casesError
 
     // Calculate weekly stats
-    const totalCases = cases?.length || 0;
+    const totalCases = cases?.length || 0
     const totalRVU = cases?.reduce((sum, case_item) => {
       return sum + (case_item.case_codes?.reduce((codeSum: number, code: any) => 
-        codeSum + (parseFloat(code.rvu) || 0), 0) || 0);
-    }, 0) || 0;
+        codeSum + (parseFloat(code.rvu) || 0), 0) || 0)
+    }, 0) || 0
 
-    // Analyze CPT codes and procedures
-    const cptCodeCounts: Record<string, number> = {};
-    const specialtyBreakdown: Record<string, number> = {};
+    const avgRVUPerCase = totalCases > 0 ? totalRVU / totalCases : 0
+
+    // Generate AI insights
+    const insights = generateWeeklyInsights(cases || [], totalCases, totalRVU, avgRVUPerCase)
     
-    cases?.forEach(case_item => {
-      case_item.case_codes?.forEach((code: any) => {
-        cptCodeCounts[code.cpt_code] = (cptCodeCounts[code.cpt_code] || 0) + 1;
-        const category = code.category || 'Other';
-        specialtyBreakdown[category] = (specialtyBreakdown[category] || 0) + 1;
-      });
-    });
+    // Generate funny awards
+    const funnyAwards = generateFunnyAwards(cases || [], totalCases, totalRVU)
 
-    const assessmentData = {
-      total_cases: totalCases,
-      total_rvu: totalRVU,
-      cpt_code_counts: cptCodeCounts,
-      specialty_breakdown: specialtyBreakdown,
-      most_common_procedure: Object.entries(cptCodeCounts).sort(([,a], [,b]) => b - a)[0],
-      cases_summary: cases?.map(c => ({
-        name: c.case_name,
-        date: c.procedure_date,
-        codes: c.case_codes?.map((code: any) => code.cpt_code)
-      }))
-    };
-
-    logStep('Assessment data calculated', assessmentData);
-
-    // Generate AI insights and funny awards
-    const prompt = `
-You are a witty AI assistant for surgeons who analyzes their weekly performance and creates funny, motivational awards. 
-Analyze this surgeon's week and generate:
-
-1. A brief, encouraging insight about their performance
-2. 3-5 funny, specific awards based on their actual cases and procedures
-
-Week Summary:
-- Total Cases: ${totalCases}
-- Total RVU: ${totalRVU.toFixed(2)}
-- Most Common Procedure: ${assessmentData.most_common_procedure?.[0] || 'None'} (${assessmentData.most_common_procedure?.[1] || 0} times)
-- Specialty Breakdown: ${JSON.stringify(specialtyBreakdown)}
-- CPT Code Counts: ${JSON.stringify(cptCodeCounts)}
-
-User Profile: ${profile?.display_name || 'Unknown'}, ${profile?.user_role || 'Surgeon'}
-
-Create funny awards that are:
-- Specific to their actual procedures and numbers
-- Encouraging and positive
-- Clever/witty but professional
-- Include emojis
-- Reference specific CPT codes or case types when relevant
-
-Examples of funny award styles:
-- "Gallbladder Gobbler 🪣" for multiple cholecystectomies
-- "Knee Whisperer 🦴" for lots of knee procedures
-- "RVU Rocket 🚀" for high RVU generation
-- "Speed Demon ⚡" for high case volume
-- "Night Owl 🦉" for late cases
-
-Return your response as JSON with:
-{
-  "insights": "brief encouraging paragraph about their week",
-  "funny_awards": [
-    {
-      "title": "Award Title",
-      "description": "Funny description of why they earned it",
-      "emoji": "🏆",
-      "criteria_met": "specific numbers or achievements"
-    }
-  ]
-}
-`;
-
-    logStep('Calling OpenAI for AI assessment');
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          { role: 'system', content: 'You are a witty AI assistant that creates funny, encouraging awards for surgeons based on their case performance.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.8,
-        max_tokens: 1000,
-      }),
-    });
-
-    if (!openAIResponse.ok) {
-      throw new Error(`OpenAI API error: ${openAIResponse.statusText}`);
-    }
-
-    const openAIData = await openAIResponse.json();
-    const aiContent = openAIData.choices[0].message.content;
-    
-    logStep('OpenAI response received', { content: aiContent });
-
-    let aiResult;
-    try {
-      aiResult = JSON.parse(aiContent);
-    } catch (e) {
-      // Fallback if AI doesn't return proper JSON
-      aiResult = {
-        insights: "Great work this week! Keep up the excellent surgical skills.",
-        funny_awards: [{
-          title: "Surgical Superstar",
-          description: `Completed ${totalCases} cases with ${totalRVU.toFixed(0)} RVUs`,
-          emoji: "⭐",
-          criteria_met: `${totalCases} cases, ${totalRVU.toFixed(0)} RVUs`
-        }]
-      };
-    }
-
-    // Store the assessment
+    // Save assessment to database
     const { data: assessment, error: assessmentError } = await supabaseClient
       .from('weekly_assessments')
       .upsert({
         user_id,
         week_start,
         week_end,
-        assessment_data: assessmentData,
-        ai_insights: aiResult.insights,
-        funny_awards: aiResult.funny_awards
-      }, {
-        onConflict: 'user_id,week_start'
+        assessment_data: {
+          total_cases: totalCases,
+          total_rvu: totalRVU,
+          avg_rvu_per_case: avgRVUPerCase,
+          case_breakdown: cases?.reduce((acc: any, case_item) => {
+            case_item.case_codes?.forEach((code: any) => {
+              const category = code.category || 'Other'
+              acc[category] = (acc[category] || 0) + 1
+            })
+            return acc
+          }, {})
+        },
+        ai_insights: insights,
+        funny_awards: funnyAwards
       })
       .select()
-      .single();
+      .single()
 
-    if (assessmentError) {
-      logStep('Error storing assessment', assessmentError);
-      throw assessmentError;
-    }
+    if (assessmentError) throw assessmentError
 
-    // Create achievement records for funny awards
-    for (const award of aiResult.funny_awards) {
-      // Check if achievement type exists, create if not
-      const { data: existingType } = await supabaseClient
-        .from('achievement_types')
-        .select('id')
-        .eq('name', award.title)
-        .single();
+    // Award any funny achievements
+    await awardFunnyAchievements(supabaseClient, user_id, funnyAwards)
 
-      let achievementTypeId;
-      if (!existingType) {
-        const { data: newType, error: typeError } = await supabaseClient
-          .from('achievement_types')
-          .insert({
-            name: award.title,
-            description: award.description,
-            icon: award.emoji,
-            category: 'ai_generated',
-            rarity: 'common',
-            criteria: { ai_generated: true }
-          })
-          .select('id')
-          .single();
-
-        if (typeError) {
-          logStep('Error creating achievement type', typeError);
-          continue;
-        }
-        achievementTypeId = newType.id;
-      } else {
-        achievementTypeId = existingType.id;
+    return new Response(
+      JSON.stringify({ success: true, assessment }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
       }
-
-      // Award the achievement
-      const weekFormat = new Date(week_start).toISOString().slice(0, 4) + '-W' + 
-        String(Math.ceil((new Date(week_start).getTime() - new Date(new Date(week_start).getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))).padStart(2, '0');
-
-      await supabaseClient
-        .from('user_achievements')
-        .upsert({
-          user_id,
-          achievement_type_id: achievementTypeId,
-          week_earned: weekFormat,
-          ai_generated: true,
-          metadata: {
-            criteria_met: award.criteria_met,
-            assessment_id: assessment.id
-          }
-        }, {
-          onConflict: 'user_id,achievement_type_id,week_earned'
-        });
-    }
-
-    logStep('Assessment completed successfully');
-
-    return new Response(JSON.stringify({
-      success: true,
-      assessment: assessment,
-      ai_insights: aiResult.insights,
-      funny_awards: aiResult.funny_awards
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    )
 
   } catch (error) {
-    logStep('Error in weekly AI assessment', error);
-    return new Response(JSON.stringify({ 
-      error: 'Failed to generate weekly assessment',
-      details: error.message 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error generating weekly assessment:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400 
+      }
+    )
   }
-});
+})
+
+function generateWeeklyInsights(cases: any[], totalCases: number, totalRVU: number, avgRVU: number): string {
+  const insights = []
+
+  if (totalCases === 0) {
+    return "Take some time to rest and prepare for an amazing week ahead! Even the best surgeons need recovery time."
+  }
+
+  if (totalCases >= 10) {
+    insights.push("🔥 You're absolutely crushing it this week with high case volume!")
+  } else if (totalCases >= 5) {
+    insights.push("⚡ Solid week with consistent surgical activity.")
+  } else {
+    insights.push("🎯 Quality over quantity - focused surgical precision this week.")
+  }
+
+  if (avgRVU > 15) {
+    insights.push("💎 Your case complexity is impressive - handling high-value procedures like a pro.")
+  } else if (avgRVU > 10) {
+    insights.push("⭐ Great balance of procedure complexity and efficiency.")
+  }
+
+  if (totalRVU > 200) {
+    insights.push("🚀 Outstanding RVU generation - you're in the top tier of performers!")
+  }
+
+  // Analyze case patterns
+  const categoryBreakdown = cases.reduce((acc: any, case_item) => {
+    case_item.case_codes?.forEach((code: any) => {
+      const category = code.category || 'Other'
+      acc[category] = (acc[category] || 0) + 1
+    })
+    return acc
+  }, {})
+
+  const primaryCategory = Object.keys(categoryBreakdown).reduce((a, b) => 
+    categoryBreakdown[a] > categoryBreakdown[b] ? a : b, '')
+
+  if (primaryCategory) {
+    insights.push(`🎯 Your specialty focus this week was ${primaryCategory} procedures.`)
+  }
+
+  return insights.join(' ')
+}
+
+function generateFunnyAwards(cases: any[], totalCases: number, totalRVU: number): any[] {
+  const awards = []
+
+  // Case volume awards
+  if (totalCases >= 15) {
+    awards.push({
+      emoji: '🤖',
+      title: 'Surgical Machine',
+      description: 'You handled more cases than some residents see in a month!',
+      criteria_met: `${totalCases} cases completed`
+    })
+  } else if (totalCases === 1) {
+    awards.push({
+      emoji: '🎯',
+      title: 'Precision Sniper',
+      description: 'One case, one perfect outcome. Quality over quantity!',
+      criteria_met: 'Single perfect case'
+    })
+  }
+
+  // RVU awards
+  if (totalRVU > 300) {
+    awards.push({
+      emoji: '💰',
+      title: 'Money Maker',
+      description: 'Your RVU game is so strong, accounting is jealous!',
+      criteria_met: `${totalRVU.toFixed(1)} RVU generated`
+    })
+  } else if (totalRVU > 100) {
+    awards.push({
+      emoji: '⚡',
+      title: 'Efficiency Expert',
+      description: 'Solid RVU generation with surgical precision!',
+      criteria_met: `${totalRVU.toFixed(1)} RVU generated`
+    })
+  }
+
+  // Day of week patterns
+  const dayPatterns = analyzeDayPatterns(cases)
+  if (dayPatterns.mondayWarrior) {
+    awards.push({
+      emoji: '☕',
+      title: 'Monday Warrior',
+      description: 'You attack Mondays like they owe you money!',
+      criteria_met: 'Heavy Monday case load'
+    })
+  }
+
+  if (dayPatterns.fridayFinisher) {
+    awards.push({
+      emoji: '🍺',
+      title: 'Friday Finisher',
+      description: 'Ending the week strong - you earned that weekend!',
+      criteria_met: 'Strong Friday performance'
+    })
+  }
+
+  // Specialty-specific awards
+  const hasComplexCases = cases.some(c => 
+    c.case_codes?.some((code: any) => parseFloat(code.rvu) > 20)
+  )
+
+  if (hasComplexCases) {
+    awards.push({
+      emoji: '🧠',
+      title: 'Complexity Crusher',
+      description: 'Taking on the cases that make other surgeons nervous!',
+      criteria_met: 'High-complexity procedures'
+    })
+  }
+
+  // Random fun awards
+  const randomAwards = [
+    {
+      emoji: '🦸',
+      title: 'Surgical Superhero',
+      description: 'Cape not included, but clearly not needed!',
+      criteria_met: 'Outstanding week overall'
+    },
+    {
+      emoji: '🎪',
+      title: 'Multitasking Maestro',
+      description: 'Juggling cases like a seasoned circus performer!',
+      criteria_met: 'Diverse case portfolio'
+    },
+    {
+      emoji: '🔬',
+      title: 'Precision Pioneer',
+      description: 'Your attention to detail is scientifically impressive!',
+      criteria_met: 'Meticulous case documentation'
+    }
+  ]
+
+  // Add a random award if none generated yet
+  if (awards.length === 0) {
+    awards.push(randomAwards[Math.floor(Math.random() * randomAwards.length)])
+  }
+
+  return awards.slice(0, 3) // Limit to 3 awards max
+}
+
+function analyzeDayPatterns(cases: any[]): any {
+  const dayCount = cases.reduce((acc: any, case_item) => {
+    const day = new Date(case_item.procedure_date).getDay()
+    acc[day] = (acc[day] || 0) + 1
+    return acc
+  }, {})
+
+  return {
+    mondayWarrior: (dayCount[1] || 0) >= 3,
+    fridayFinisher: (dayCount[5] || 0) >= 2
+  }
+}
+
+async function awardFunnyAchievements(supabaseClient: any, userId: string, awards: any[]) {
+  for (const award of awards) {
+    // Find matching achievement type
+    const { data: achievementType } = await supabaseClient
+      .from('achievement_types')
+      .select('id')
+      .eq('name', award.title)
+      .eq('category', 'ai_generated')
+      .single()
+
+    if (achievementType) {
+      // Check if user already has this achievement this week
+      const weekStart = new Date()
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+      const weekId = weekStart.toISOString().split('T')[0]
+
+      const { data: existing } = await supabaseClient
+        .from('user_achievements')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('achievement_type_id', achievementType.id)
+        .eq('week_earned', weekId)
+        .single()
+
+      if (!existing) {
+        await supabaseClient
+          .from('user_achievements')
+          .insert({
+            user_id: userId,
+            achievement_type_id: achievementType.id,
+            week_earned: weekId,
+            ai_generated: true,
+            metadata: award
+          })
+      }
+    }
+  }
+}
