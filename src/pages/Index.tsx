@@ -22,6 +22,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const isGuest = searchParams.get('guest') === 'true';
 
+  // Move ALL hooks to the top before any conditional logic
   useEffect(() => {
     const path = location.pathname;
     const tab = searchParams.get('tab');
@@ -47,6 +48,14 @@ const Index = () => {
     
     setActiveTab(newTab);
   }, [location.pathname, searchParams]);
+
+  // Navigation effect - also moved to top
+  useEffect(() => {
+    const hasAccess = user || isGuest;
+    if (!hasAccess && !loading) {
+      navigate('/auth');
+    }
+  }, [user, isGuest, loading, navigate]);
 
   const handleTabChange = (tab: string) => {
     const params = new URLSearchParams(searchParams);
@@ -101,7 +110,7 @@ const Index = () => {
     navigate(routeWithParams);
   };
 
-  // Only show loading if we're not in guest mode and auth is actually loading
+  // Now handle conditional returns AFTER all hooks
   if (loading && !isGuest) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -113,17 +122,7 @@ const Index = () => {
     );
   }
 
-  // Allow access if user exists OR if in guest mode
   const hasAccess = user || isGuest;
-  
-  // Use useEffect to handle navigation to prevent render phase updates
-  useEffect(() => {
-    if (!hasAccess && !loading) {
-      navigate('/auth');
-    }
-  }, [hasAccess, loading, navigate]);
-  
-  // Early return after all hooks have been called
   if (!hasAccess && !loading) {
     return null;
   }
