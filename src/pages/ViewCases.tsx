@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { 
   FileText, 
   Calendar as CalendarIcon, 
@@ -54,6 +55,7 @@ interface CaseCode {
 export const ViewCases = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,6 +161,29 @@ export const ViewCases = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditCase = (caseData: Case) => {
+    // Navigate to New Case page with existing case data for editing
+    navigate('/new-case', {
+      state: {
+        editingCase: caseData,
+        codes: caseData.case_codes || [],
+        caseName: caseData.case_name,
+        procedureDescription: caseData.procedure_description,
+        patientMrn: caseData.patient_mrn,
+        procedureDate: caseData.procedure_date,
+        notes: caseData.notes
+      }
+    });
+  };
+
+  const handleViewCase = (caseData: Case) => {
+    // For now, just show a detailed view - could be expanded to a modal or separate page
+    toast({
+      title: caseData.case_name,
+      description: `${caseData.case_codes?.length || 0} codes, ${caseData.total_rvu} RVU, $${caseData.estimated_value.toFixed(2)}`,
+    });
   };
 
   const filteredCases = cases.filter(case_ => {
@@ -382,10 +407,20 @@ export const ViewCases = () => {
                         </div>
                         
                         <div className="flex gap-1 mt-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleViewCase(case_)}
+                            title="View case details"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditCase(case_)}
+                            title="Edit case"
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 

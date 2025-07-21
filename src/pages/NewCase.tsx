@@ -49,6 +49,9 @@ export const NewCase = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // Check if we're editing an existing case
+  const editingCase = location.state?.editingCase;
+  
   const [caseData, setCaseData] = useState<CaseData>({
     case_name: 'New Case',
     procedure_date: new Date().toISOString().split('T')[0],
@@ -61,24 +64,39 @@ export const NewCase = () => {
   const [lastQuery, setLastQuery] = useState('');
   const [rvuRate, setRvuRate] = useState<number>(profile?.default_rvu_rate || 65);
 
-  // Handle pre-populated codes from navigation state
+  // Handle pre-populated codes and editing cases
   useEffect(() => {
-    if (location.state?.codes) {
+    if (editingCase) {
+      // Editing an existing case
+      setCaseData({
+        case_name: editingCase.case_name,
+        patient_mrn: editingCase.patient_mrn || '',
+        procedure_date: editingCase.procedure_date || new Date().toISOString().split('T')[0],
+        procedure_description: editingCase.procedure_description || '',
+        notes: editingCase.notes || ''
+      });
+      
+      if (editingCase.case_codes) {
+        setSelectedCodes(editingCase.case_codes.map((code: any) => ({
+          code: code.cpt_code,
+          description: code.description,
+          rvu: code.rvu,
+          category: code.category,
+          modifiers: code.modifiers
+        })));
+      }
+    } else if (location.state?.codes) {
+      // Creating new case from search codes
       setSelectedCodes(location.state.codes);
       if (location.state.procedureDescription) {
         setCaseData(prev => ({
           ...prev,
+          case_name: location.state.caseName || prev.case_name,
           procedure_description: location.state.procedureDescription
         }));
       }
-      if (location.state.caseName) {
-        setCaseData(prev => ({
-          ...prev,
-          case_name: location.state.caseName
-        }));
-      }
     }
-  }, [location.state]);
+  }, [location.state, editingCase]);
 
   // Update RVU rate when profile loads
   useEffect(() => {
@@ -242,28 +260,58 @@ export const NewCase = () => {
     setIsSaving(true);
     
     try {
-      // Insert case
-      const { data: caseResult, error: caseError } = await supabase
-        .from('cases')
-        .insert({
-          user_id: user.id,
-          case_name: caseData.case_name,
-          patient_mrn: caseData.patient_mrn || null,
-          procedure_date: caseData.procedure_date || null,
-          procedure_description: caseData.procedure_description || null,
-          notes: caseData.notes || null,
-          total_rvu: totalRVUs,
-          estimated_value: estimatedValue,
-          status: 'active'
-        })
-        .select()
-        .single();
+      let caseId: string;
 
-      if (caseError) throw caseError;
+      if (editingCase) {
+        // Update existing case
+        const { error: caseError } = await supabase
+          .from('cases')
+          .update({
+            case_name: caseData.case_name,
+            patient_mrn: caseData.patient_mrn || null,
+            procedure_date: caseData.procedure_date || null,
+            procedure_description: caseData.procedure_description || null,
+            notes: caseData.notes || null,
+            total_rvu: totalRVUs,
+            estimated_value: estimatedValue,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingCase.id)
+          .eq('user_id', user.id);
+
+        if (caseError) throw caseError;
+        caseId = editingCase.id;
+
+        // Delete existing case codes
+        await supabase
+          .from('case_codes')
+          .delete()
+          .eq('case_id', caseId);
+      } else {
+        // Insert new case
+        const { data: caseResult, error: caseError } = await supabase
+          .from('cases')
+          .insert({
+            user_id: user.id,
+            case_name: caseData.case_name,
+            patient_mrn: caseData.patient_mrn || null,
+            procedure_date: caseData.procedure_date || null,
+            procedure_description: caseData.procedure_description || null,
+            notes: caseData.notes || null,
+            total_rvu: totalRVUs,
+            estimated_value: estimatedValue,
+            status: 'active'
+          })
+          .select()
+          .single();
+
+        if (caseError) throw caseError;
+        caseId = caseResult.id;
+      }
 
       // Insert case codes
       const caseCodesData = selectedCodes.map((code, index) => ({
-        case_id: caseResult.id,
+        case_id: caseId,
         user_id: user.id,
         cpt_code: code.code,
         description: code.description,
@@ -281,7 +329,7 @@ export const NewCase = () => {
       if (codesError) throw codesError;
 
       toast({
-        title: "Case saved successfully",
+        title: editingCase ? "Case updated successfully" : "Case saved successfully",
         description: "Your case has been saved with " + selectedCodes.length + " codes",
         action: (
           <Button 
@@ -294,7 +342,7 @@ export const NewCase = () => {
         ),
       });
 
-      // Reset form
+      // Reset form and navigate to view cases
       setCaseData({
         case_name: 'New Case',
         procedure_date: new Date().toISOString().split('T')[0],
@@ -302,6 +350,8 @@ export const NewCase = () => {
       setSelectedCodes([]);
       setSearchResults([]);
       setLastQuery('');
+      
+      navigate('/view-cases');
 
     } catch (error) {
       console.error('Error saving case:', error);
@@ -331,7 +381,7 @@ export const NewCase = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Case Management
+              {editingCase ? 'Edit Case' : 'Case Management'}
               <TutorialTooltip {...newCaseTutorial} />
             </CardTitle>
             <div className="flex gap-2">
@@ -346,7 +396,7 @@ export const NewCase = () => {
                 size="sm"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save Case'}
+                {isSaving ? 'Saving...' : (editingCase ? 'Update Case' : 'Save Case')}
               </Button>
             </div>
           </div>
