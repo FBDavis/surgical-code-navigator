@@ -30,18 +30,18 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'You are an OCR (Optical Character Recognition) system. Extract ONLY the exact text that is visible in the image. Do not interpret, summarize, or add any medical context. Return word-for-word what you see written, including abbreviations, numbers, dates, and formatting as they appear. If text is unclear, mark it as [unclear] but otherwise output only the literal text visible.'
+            content: 'You are a medical text extraction expert. Extract all readable text from medical documents, surgical notes, and medical images. Focus on procedure descriptions, diagnoses, and medical terminology. Return only the extracted text without additional commentary.'
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: 'Extract the exact text visible in this image. Return only what is literally written - do not interpret, expand, or add medical context.'
+                text: 'Please extract all readable text from this medical document or image, focusing on surgical procedures, diagnoses, and medical information.'
               },
               {
                 type: 'image_url',

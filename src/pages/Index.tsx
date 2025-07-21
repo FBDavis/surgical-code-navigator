@@ -9,9 +9,6 @@ import { ViewCases } from './ViewCases';
 import CameraSchedule from './CameraSchedule';
 import { Settings } from './Settings';
 import ResidentTracker from './ResidentTracker';
-import { Analytics } from './Analytics';
-import { CommonProcedures } from './CommonProcedures';
-import { ProcedureCount } from './ProcedureCount';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
@@ -22,60 +19,85 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const isGuest = searchParams.get('guest') === 'true';
 
-  // Simple tab setting based on URL
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) {
-      setActiveTab(tab);
-    } else if (location.pathname === '/dashboard') {
+    // Set active tab based on current route
+    const path = location.pathname;
+    if (path === '/dashboard') {
       setActiveTab('home');
-    } else if (location.pathname === '/new-case') {
+    } else if (path === '/new-case') {
       setActiveTab('newcase');
-    } else if (location.pathname === '/search-codes') {
+    } else if (path === '/search-codes') {
       setActiveTab('search');
-    } else if (location.pathname === '/view-cases') {
+    } else if (path === '/view-cases') {
       setActiveTab('viewcases');
-    } else if (location.pathname === '/camera-schedule') {
+    } else if (path === '/camera-schedule') {
       setActiveTab('camera');
-    } else if (location.pathname === '/resident-tracker') {
+    } else if (path === '/resident-tracker') {
       setActiveTab('resident');
-    } else if (location.pathname === '/settings') {
+    } else if (path === '/gamification') {
+      setActiveTab('gamification');
+    } else if (path === '/settings') {
       setActiveTab('settings');
-    } else {
+    } else if (path === '/subscription') {
+      setActiveTab('subscription');
+    } else if (path === '/') {
       setActiveTab('home');
+    } else {
+      // Check for tab parameter as fallback
+      const tab = searchParams.get('tab');
+      if (tab) {
+        setActiveTab(tab);
+      } else {
+        setActiveTab('home');
+      }
     }
   }, [location.pathname, searchParams]);
 
-  // Handle auth redirect
-  useEffect(() => {
-    if (!loading && !user && !isGuest) {
-      navigate('/auth');
-    }
-  }, [user, loading, isGuest, navigate]);
-
   const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
     const params = new URLSearchParams(searchParams);
+    let route = '/';
     
     switch (tab) {
       case 'home':
-        navigate('/dashboard');
+        route = '/dashboard';
         break;
-      case 'analytics':
-        navigate('/?tab=analytics' + (params.toString() ? '&' + params.toString() : ''));
+      case 'newcase':
+        route = '/new-case';
         break;
-      case 'common':
-        navigate('/?tab=common' + (params.toString() ? '&' + params.toString() : ''));
+      case 'search':
+        route = '/search-codes';
         break;
-      case 'procedures':
-        navigate('/?tab=procedures' + (params.toString() ? '&' + params.toString() : ''));
+      case 'viewcases':
+        route = '/view-cases';
+        break;
+      case 'camera':
+        route = '/camera-schedule';
+        break;
+      case 'messages':
+        route = '/messages';
+        break;
+      case 'resident':
+        route = '/resident-tracker';
+        break;
+      case 'gamification':
+        route = '/gamification';
+        break;
+      case 'subscription':
+        route = '/subscription';
+        break;
+      case 'settings':
+        route = '/settings';
         break;
       default:
-        navigate('/dashboard');
+        route = '/dashboard';
     }
+    
+    // Preserve guest parameter if it exists
+    const routeWithParams = params.toString() ? `${route}?${params.toString()}` : route;
+    navigate(routeWithParams);
   };
 
-  // Show loading only if actually loading
+  // Only show loading if we're not in guest mode and auth is actually loading
   if (loading && !isGuest) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -87,19 +109,134 @@ const Index = () => {
     );
   }
 
-  // Redirect if no access
-  if (!user && !isGuest) {
+  // Allow access if user exists OR if in guest mode
+  const hasAccess = user || isGuest;
+  
+  // Use useEffect to handle navigation to prevent render phase updates
+  useEffect(() => {
+    if (!hasAccess && !loading) {
+      navigate('/auth');
+    }
+  }, [hasAccess, loading, navigate]);
+  
+  if (!hasAccess) {
     return null;
   }
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'home':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-0 pb-20 md:pb-6">
+              <Dashboard onTabChange={handleTabChange} />
+            </div>
+          </div>
+        );
+      case 'newcase':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <NewCase />
+            </div>
+          </div>
+        );
+      case 'search':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <SearchCodes />
+            </div>
+          </div>
+        );
+      case 'viewcases':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <ViewCases />
+            </div>
+          </div>
+        );
+      case 'camera':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <CameraSchedule />
+            </div>
+          </div>
+        );
+      case 'resident':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <ResidentTracker />
+            </div>
+          </div>
+        );
+      case 'gamification':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <div className="text-center py-8 md:py-12">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">Gamification Hub</h2>
+                <p className="text-sm md:text-base text-muted-foreground mb-6">Access achievements, leaderboards, and AI insights...</p>
+                <button 
+                  onClick={() => handleTabChange('home')}
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                >
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Back to Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        );
       case 'analytics':
-        return <Analytics />;
-      case 'common':
-        return <CommonProcedures />;
-      case 'procedures':
-        return <ProcedureCount />;
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <div className="text-center py-8 md:py-12">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">Analytics Dashboard</h2>
+                <p className="text-sm md:text-base text-muted-foreground">Detailed RVU analytics and reporting coming soon...</p>
+              </div>
+            </div>
+          </div>
+        );
+      case 'settings':
+        return (
+          <div className="min-h-screen">
+            <div className="Navigation">
+              <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            <div className="md:ml-64 p-3 md:p-6 pb-20 md:pb-6">
+              <Settings />
+            </div>
+          </div>
+        );
       default:
         return <Dashboard onTabChange={handleTabChange} />;
     }
@@ -107,14 +244,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="min-h-screen">
-        <div className="Navigation">
-          <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
-        <div className="md:ml-64 p-0 pb-20 md:pb-6">
-          {renderContent()}
-        </div>
-      </div>
+      {renderContent()}
     </div>
   );
 };

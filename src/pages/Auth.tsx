@@ -47,7 +47,7 @@ export default function Auth() {
         setShowPasswordReset(false);
         setResetEmailSent(false);
       } else if (session?.user && !showUpdatePassword) {
-        const returnTo = searchParams.get('returnTo');
+        const returnTo = params.get('returnTo');
         if (returnTo) {
           navigate(decodeURIComponent(returnTo));
         } else {
@@ -77,13 +77,7 @@ export default function Auth() {
         description: "You have successfully signed in.",
       });
       
-      // Check for returnTo parameter
-      const returnTo = searchParams.get('returnTo');
-      if (returnTo) {
-        navigate(decodeURIComponent(returnTo));
-      } else {
-        navigate('/');
-      }
+      navigate('/');
     } catch (error: any) {
       console.error('Sign in error:', error);
       setError(error.message || 'An error occurred during sign in');

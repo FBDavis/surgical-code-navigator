@@ -322,9 +322,7 @@ interface TutorialHubProps {
 
 export const TutorialHub = ({ isOpen, onClose }: TutorialHubProps) => {
   const { startTutorial, completedTutorials } = useTutorial();
-  const { user } = useAuth();
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  const [disableStartup, setDisableStartup] = useState(false);
 
   const availableFeatures = [
     { id: 'basics', name: 'Basic Navigation', description: 'Learn to navigate the app' },
@@ -479,39 +477,9 @@ export const TutorialHub = ({ isOpen, onClose }: TutorialHubProps) => {
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={onClose}>
-                Skip for now
-              </Button>
-              
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="disable-startup"
-                  checked={disableStartup}
-                  onCheckedChange={async (checked) => {
-                    setDisableStartup(checked as boolean);
-                    // Update user preference in Supabase
-                    if (user) {
-                      const { supabase } = await import('@/integrations/supabase/client');
-                      const { error } = await supabase
-                        .from('profiles')
-                        .update({ 
-                          show_tutorial_on_startup: !checked,
-                          completed_onboarding: true 
-                        })
-                        .eq('user_id', user.id);
-                      
-                      if (error) {
-                        console.error('Error updating tutorial preference:', error);
-                      }
-                    }
-                  }}
-                />
-                <label htmlFor="disable-startup" className="text-xs text-muted-foreground cursor-pointer">
-                  Don't show tutorial on startup
-                </label>
-              </div>
-            </div>
+            <Button variant="outline" onClick={onClose}>
+              Skip for now
+            </Button>
             
             <Button 
               onClick={startSelectedTutorials}

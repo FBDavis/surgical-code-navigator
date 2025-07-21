@@ -191,26 +191,6 @@ export const SearchCodes = () => {
       return;
     }
 
-    // Check authentication
-    if (!user) {
-      // Save selected codes to localStorage and redirect to auth
-      const tempData = {
-        codes: selectedCodes,
-        procedureDescription: lastQuery,
-        caseName: `Case - ${lastQuery.substring(0, 50)}${lastQuery.length > 50 ? '...' : ''}`,
-        timestamp: Date.now()
-      };
-      localStorage.setItem('tempCaseData', JSON.stringify(tempData));
-      
-      toast({
-        title: "Sign In Required",
-        description: "Please sign in to create a case. Your codes will be saved.",
-      });
-      
-      navigate('/auth?returnTo=' + encodeURIComponent('/new-case'));
-      return;
-    }
-
     // Navigate to New Case page with pre-populated codes
     navigate('/new-case', { 
       state: { 

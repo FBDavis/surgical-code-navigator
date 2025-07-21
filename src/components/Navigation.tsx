@@ -32,9 +32,9 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'camera', label: 'Schedule Scanner', icon: Camera },
     { id: 'messages', label: 'Messages', icon: MessageSquare },
     { id: 'resident', label: 'Resident Tracker', icon: GraduationCap },
-    { id: 'gamification', label: 'Gamification', icon: Crown },
+    { id: 'gamification', label: 'Gamification', icon: Trophy },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'subscription', label: 'Subscription', icon: Trophy },
+    { id: 'subscription', label: 'Subscription', icon: Crown },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
