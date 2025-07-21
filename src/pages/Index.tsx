@@ -26,27 +26,30 @@ const Index = () => {
     const path = location.pathname;
     const tab = searchParams.get('tab');
     
-    // If we're on root path with a tab param, use that tab
+    let newTab = 'home';
+    
     if (path === '/' && tab) {
-      setActiveTab(tab);
-      return;
+      newTab = tab;
+    } else {
+      const pathToTab: Record<string, string> = {
+        '/dashboard': 'home',
+        '/new-case': 'newcase', 
+        '/search-codes': 'search',
+        '/view-cases': 'viewcases',
+        '/camera-schedule': 'camera',
+        '/resident-tracker': 'resident',
+        '/gamification': 'gamification',
+        '/settings': 'settings',
+        '/subscription': 'subscription'
+      };
+      newTab = pathToTab[path] || 'home';
     }
     
-    // Otherwise, map paths to tabs
-    const pathToTab: Record<string, string> = {
-      '/dashboard': 'home',
-      '/new-case': 'newcase',
-      '/search-codes': 'search',
-      '/view-cases': 'viewcases',
-      '/camera-schedule': 'camera',
-      '/resident-tracker': 'resident',
-      '/gamification': 'gamification',
-      '/settings': 'settings',
-      '/subscription': 'subscription'
-    };
-    
-    setActiveTab(pathToTab[path] || 'home');
-  }, [location.pathname, searchParams]);
+    // Only update if different to prevent infinite loops
+    if (activeTab !== newTab) {
+      setActiveTab(newTab);
+    }
+  }, [location.pathname, searchParams, activeTab]);
 
   const handleTabChange = (tab: string) => {
     const params = new URLSearchParams(searchParams);
