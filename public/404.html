@@ -4,27 +4,13 @@
     <meta charset="utf-8">
     <title>Surgical Code Navigator</title>
     <script type="text/javascript">
-      // GitHub Pages redirect for React Router
+      // GitHub Pages redirect for React Router with relative base
       var l = window.location;
+      var redirect = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + l.pathname.split('/').slice(0, -1).join('/') + '/';
       
-      // Detect if we're on a GitHub Pages project site or user site
-      var pathSegments = l.pathname.split('/').filter(Boolean);
-      var isProjectSite = pathSegments.length > 0 && pathSegments[0] !== '';
-      
-      var basePath = isProjectSite ? '/' + pathSegments[0] + '/' : '/';
-      var remainingPath = isProjectSite ? pathSegments.slice(1).join('/') : pathSegments.join('/');
-      
-      var redirect = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + basePath;
-      
-      // If we have a path or search params, encode them
-      if (remainingPath || l.search) {
-        redirect += '?/';
-        if (remainingPath) {
-          redirect += remainingPath;
-        }
-        if (l.search) {
-          redirect += (remainingPath ? '&' : '') + l.search.slice(1).replace(/&/g, '~and~');
-        }
+      // If we have search params, encode them for React Router
+      if (l.search) {
+        redirect += '?/' + l.search.slice(1).replace(/&/g, '~and~');
       }
       
       if (l.hash) {
