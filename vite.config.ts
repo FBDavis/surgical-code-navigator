@@ -5,7 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/surgical-code-navigator/',
+  base: './',
   server: {
     host: "::",
     port: 8080,
