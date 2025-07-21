@@ -23,35 +23,29 @@ const Index = () => {
   const isGuest = searchParams.get('guest') === 'true';
 
   useEffect(() => {
-    // Set active tab based on current route
     const path = location.pathname;
     const tab = searchParams.get('tab');
     
-    if (path === '/dashboard') {
-      setActiveTab('home');
-    } else if (path === '/new-case') {
-      setActiveTab('newcase');
-    } else if (path === '/search-codes') {
-      setActiveTab('search');
-    } else if (path === '/view-cases') {
-      setActiveTab('viewcases');
-    } else if (path === '/camera-schedule') {
-      setActiveTab('camera');
-    } else if (path === '/resident-tracker') {
-      setActiveTab('resident');
-    } else if (path === '/gamification') {
-      setActiveTab('gamification');
-    } else if (path === '/settings') {
-      setActiveTab('settings');
-    } else if (path === '/subscription') {
-      setActiveTab('subscription');
-    } else if (path === '/' && tab) {
-      // Handle tab-based navigation for root path
-      console.log('Setting active tab to:', tab);
+    // If we're on root path with a tab param, use that tab
+    if (path === '/' && tab) {
       setActiveTab(tab);
-    } else {
-      setActiveTab('home');
+      return;
     }
+    
+    // Otherwise, map paths to tabs
+    const pathToTab: Record<string, string> = {
+      '/dashboard': 'home',
+      '/new-case': 'newcase',
+      '/search-codes': 'search',
+      '/view-cases': 'viewcases',
+      '/camera-schedule': 'camera',
+      '/resident-tracker': 'resident',
+      '/gamification': 'gamification',
+      '/settings': 'settings',
+      '/subscription': 'subscription'
+    };
+    
+    setActiveTab(pathToTab[path] || 'home');
   }, [location.pathname, searchParams]);
 
   const handleTabChange = (tab: string) => {
