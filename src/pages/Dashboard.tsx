@@ -187,6 +187,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   }, [user, profile, completedTutorials, subscriptionStatus]);
 
   const handleNavigation = (tab: string) => {
+    console.log('Dashboard handleNavigation called with:', tab, 'onTabChange exists:', !!onTabChange);
     if (onTabChange) {
       onTabChange(tab);
     } else {
