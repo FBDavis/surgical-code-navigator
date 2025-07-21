@@ -2,7 +2,8 @@ import { useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, MicOff, Camera, Send, Upload } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Mic, MicOff, Camera, Send, Upload, Image, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,14 +59,14 @@ export const DictationCard = ({ onSubmit, isProcessing, selectedCodes = [], spec
     }
   };
 
-  const handleCameraCapture = async () => {
+  const handleTakePhoto = async () => {
     setIsCapturingPhoto(true);
     try {
       // Check if we're in a Capacitor environment
       const isCapacitor = (window as any).Capacitor?.isNativePlatform?.();
       
       if (isCapacitor) {
-        // Try Capacitor camera for mobile
+        // Use Capacitor camera for mobile
         const image = await CapacitorCamera.getPhoto({
           quality: 90,
           allowEditing: false,
@@ -77,9 +78,19 @@ export const DictationCard = ({ onSubmit, isProcessing, selectedCodes = [], spec
           await processImage(image.base64String);
         }
       } else {
-        // Use file input for web
-        console.log('Using web file input for image capture');
-        fileInputRef.current?.click();
+        // For web, we'll use the file input with camera capture
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment'; // Use rear camera
+        input.onchange = async (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            const base64 = await fileToBase64(file);
+            await processImage(base64);
+          }
+        };
+        input.click();
       }
     } catch (error) {
       console.error('Camera capture error:', error);
@@ -88,8 +99,43 @@ export const DictationCard = ({ onSubmit, isProcessing, selectedCodes = [], spec
         description: "Unable to access camera. Please try uploading an image file instead.",
         variant: "destructive",
       });
-      // Fallback to file input
-      fileInputRef.current?.click();
+    } finally {
+      setIsCapturingPhoto(false);
+    }
+  };
+
+  const handleSelectFromGallery = async () => {
+    setIsCapturingPhoto(true);
+    try {
+      // Check if we're in a Capacitor environment
+      const isCapacitor = (window as any).Capacitor?.isNativePlatform?.();
+      
+      if (isCapacitor) {
+        // Use Capacitor camera for mobile gallery selection
+        const image = await CapacitorCamera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Photos
+        });
+
+        if (image.base64String) {
+          await processImage(image.base64String);
+        }
+      } else {
+        // For web, use file input
+        fileInputRef.current?.click();
+      }
+    } catch (error) {
+      console.error('Gallery selection error:', error);
+      // Only show error if it's not a user cancellation
+      if (error.message && !error.message.includes('cancelled') && !error.message.includes('User cancelled')) {
+        toast({
+          title: "Gallery Access Failed",
+          description: "Unable to access photo gallery. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsCapturingPhoto(false);
     }
@@ -225,19 +271,44 @@ export const DictationCard = ({ onSubmit, isProcessing, selectedCodes = [], spec
             >
               {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleCameraCapture}
-              disabled={isProcessing || isCapturingPhoto || isRecording}
-              className={cn(
-                "transition-all duration-200",
-                isCapturingPhoto && "animate-pulse"
-              )}
-              title="Capture or upload image"
-            >
-              {isCapturingPhoto ? <Upload className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={isProcessing || isCapturingPhoto || isRecording}
+                  className={cn(
+                    "transition-all duration-200",
+                    isCapturingPhoto && "animate-pulse"
+                  )}
+                >
+                  {isCapturingPhoto ? (
+                    <Upload className="w-4 h-4" />
+                  ) : (
+                    <>
+                      <Camera className="w-4 h-4" />
+                      <ChevronDown className="w-3 h-3 ml-1" />
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem 
+                  onClick={handleTakePhoto}
+                  disabled={isProcessing || isCapturingPhoto || isRecording}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Take Photo
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleSelectFromGallery}
+                  disabled={isProcessing || isCapturingPhoto || isRecording}
+                >
+                  <Image className="w-4 h-4 mr-2" />
+                  Choose from Gallery
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
