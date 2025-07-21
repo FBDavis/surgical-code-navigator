@@ -148,8 +148,16 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
       if (user && completedTutorials.length === 0) {
         const hasSeenOnboarding = localStorage.getItem(`onboarding-seen-${user.id}`);
         
+        // Check if there's case data to restore (this takes priority over tutorial)
+        const tempCaseData = localStorage.getItem('tempCaseData');
+        if (tempCaseData) {
+          // If there's case data, navigate to new case page instead of showing tutorial
+          navigate('/new-case');
+          return;
+        }
+        
         // Check user's preference from their profile (defaults to true if not set)
-        const showTutorialOnStartup = (profile as any)?.show_tutorial_on_startup !== false;
+        const showTutorialOnStartup = profile?.show_tutorial_on_startup !== false;
         
         if (showTutorialOnStartup && !hasSeenOnboarding) {
           // Delay to allow UI to settle

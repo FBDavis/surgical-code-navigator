@@ -493,10 +493,17 @@ export const TutorialHub = ({ isOpen, onClose }: TutorialHubProps) => {
                     // Update user preference in Supabase
                     if (user) {
                       const { supabase } = await import('@/integrations/supabase/client');
-                      await supabase
+                      const { error } = await supabase
                         .from('profiles')
-                        .update({ show_tutorial_on_startup: !checked })
+                        .update({ 
+                          show_tutorial_on_startup: !checked,
+                          completed_onboarding: true 
+                        })
                         .eq('user_id', user.id);
+                      
+                      if (error) {
+                        console.error('Error updating tutorial preference:', error);
+                      }
                     }
                   }}
                 />

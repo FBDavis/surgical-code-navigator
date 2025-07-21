@@ -18,6 +18,8 @@ interface Profile {
   year_of_training: number | null;
   institution: string | null;
   board_certification: string[] | null;
+  show_tutorial_on_startup: boolean | null;
+  completed_onboarding: boolean | null;
   created_at: string;
   updated_at: string;
 }
