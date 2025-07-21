@@ -87,14 +87,68 @@ export const NewCase = () => {
     }
   }, [profile]);
 
-  // Redirect if not authenticated
+  // Save case data to localStorage before redirecting to auth
+  const saveTemporaryCaseData = () => {
+    const tempData = {
+      caseData,
+      selectedCodes,
+      searchResults,
+      lastQuery,
+      rvuRate,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('tempCaseData', JSON.stringify(tempData));
+  };
+
+  // Load case data from localStorage after authentication
+  useEffect(() => {
+    if (user) {
+      const tempDataString = localStorage.getItem('tempCaseData');
+      if (tempDataString) {
+        try {
+          const tempData = JSON.parse(tempDataString);
+          // Only restore if data is less than 1 hour old
+          if (Date.now() - tempData.timestamp < 3600000) {
+            setCaseData(tempData.caseData || caseData);
+            setSelectedCodes(tempData.selectedCodes || []);
+            setSearchResults(tempData.searchResults || []);
+            setLastQuery(tempData.lastQuery || '');
+            setRvuRate(tempData.rvuRate || profile?.default_rvu_rate || 65);
+            
+            toast({
+              title: "Welcome back!",
+              description: "Your case data has been restored.",
+            });
+          }
+          // Clear the temporary data
+          localStorage.removeItem('tempCaseData');
+        } catch (error) {
+          console.error('Error restoring case data:', error);
+          localStorage.removeItem('tempCaseData');
+        }
+      }
+    }
+  }, [user, profile]);
+
+  // Show sign-in prompt if not authenticated
   if (!user) {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <AlertCircle className="h-5 w-5" />
-            Please sign in to create and manage cases.
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <AlertCircle className="h-5 w-5" />
+              Please sign in to create and manage cases.
+            </div>
+            <Button 
+              onClick={() => {
+                saveTemporaryCaseData();
+                navigate('/auth?returnTo=' + encodeURIComponent('/new-case'));
+              }}
+              className="w-full"
+            >
+              Sign In to Continue
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -161,7 +215,11 @@ export const NewCase = () => {
   const estimatedValue = totalRVUs * rvuRate;
 
   const handleSaveCase = async () => {
-    if (!user) return;
+    if (!user) {
+      saveTemporaryCaseData();
+      navigate('/auth?returnTo=' + encodeURIComponent('/new-case'));
+      return;
+    }
     
     if (!caseData.case_name.trim()) {
       toast({
