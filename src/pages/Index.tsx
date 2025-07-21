@@ -25,6 +25,8 @@ const Index = () => {
   useEffect(() => {
     // Set active tab based on current route
     const path = location.pathname;
+    const tab = searchParams.get('tab');
+    
     if (path === '/dashboard') {
       setActiveTab('home');
     } else if (path === '/new-case') {
@@ -43,22 +45,11 @@ const Index = () => {
       setActiveTab('settings');
     } else if (path === '/subscription') {
       setActiveTab('subscription');
-    } else if (path === '/') {
-      // For root path, check for tab parameter first
-      const tab = searchParams.get('tab');
-      if (tab) {
-        setActiveTab(tab);
-      } else {
-        setActiveTab('home');
-      }
+    } else if (path === '/' && tab) {
+      // Handle tab-based navigation for root path
+      setActiveTab(tab);
     } else {
-      // Check for tab parameter as fallback
-      const tab = searchParams.get('tab');
-      if (tab) {
-        setActiveTab(tab);
-      } else {
-        setActiveTab('home');
-      }
+      setActiveTab('home');
     }
   }, [location.pathname, searchParams]);
 
