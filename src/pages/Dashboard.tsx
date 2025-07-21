@@ -83,19 +83,32 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     } else {
       switch (tab) {
         case 'search':
-          navigate('/?tab=search');
+          navigate('/search-codes');
           break;
         case 'newcase':
-          navigate('/?tab=newcase');
+          navigate('/new-case');
           break;
         case 'analytics':
-          navigate('/?tab=analytics');
+        case 'viewcases':
+          navigate('/view-cases');
           break;
         case 'settings':
-          navigate('/?tab=settings');
+          navigate('/settings');
+          break;
+        case 'camera':
+          navigate('/camera-schedule');
+          break;
+        case 'resident':
+          navigate('/resident-tracker');
+          break;
+        case 'messages':
+          navigate('/messages');
+          break;
+        case 'gamification':
+          navigate('/gamification');
           break;
         default:
-          navigate('/');
+          navigate('/dashboard');
       }
     }
   };
