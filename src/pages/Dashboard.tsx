@@ -159,7 +159,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
         // Check user's preference from their profile (defaults to true if not set)
         const showTutorialOnStartup = profile?.show_tutorial_on_startup !== false;
         
-        if (showTutorialOnStartup && !hasSeenOnboarding) {
+        if (showTutorialOnStartup && !hasSeenOnboarding && !profile?.completed_onboarding) {
           // Delay to allow UI to settle
           setTimeout(() => {
             setShowTutorialHub(true);
@@ -192,22 +192,22 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     } else {
       switch (tab) {
         case 'search':
-          navigate('/?tab=search');
+          navigate('/search-codes');
           break;
         case 'newcase':
-          navigate('/?tab=newcase');
+          navigate('/new-case');
           break;
         case 'analytics':
-          navigate('/?tab=analytics');
+          navigate('/analytics');
           break;
         case 'settings':
-          navigate('/?tab=settings');
+          navigate('/settings');
           break;
         case 'common':
-          navigate('/?tab=common');
+          navigate('/common-procedures');
           break;
         case 'procedures':
-          navigate('/?tab=procedures');
+          navigate('/procedure-count');
           break;
         default:
           navigate('/');
