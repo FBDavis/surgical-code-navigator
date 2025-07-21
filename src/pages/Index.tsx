@@ -47,6 +47,7 @@ const Index = () => {
       setActiveTab('subscription');
     } else if (path === '/' && tab) {
       // Handle tab-based navigation for root path
+      console.log('Setting active tab to:', tab);
       setActiveTab(tab);
     } else {
       setActiveTab('home');
