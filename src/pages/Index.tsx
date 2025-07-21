@@ -45,11 +45,8 @@ const Index = () => {
       newTab = pathToTab[path] || 'home';
     }
     
-    // Only update if different to prevent infinite loops
-    if (activeTab !== newTab) {
-      setActiveTab(newTab);
-    }
-  }, [location.pathname, searchParams, activeTab]);
+    setActiveTab(newTab);
+  }, [location.pathname, searchParams]);
 
   const handleTabChange = (tab: string) => {
     const params = new URLSearchParams(searchParams);
