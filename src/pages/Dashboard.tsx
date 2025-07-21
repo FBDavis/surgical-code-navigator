@@ -198,16 +198,16 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
           navigate('/new-case');
           break;
         case 'analytics':
-          navigate('/analytics');
+          navigate('/?tab=analytics');
           break;
         case 'settings':
           navigate('/settings');
           break;
         case 'common':
-          navigate('/common-procedures');
+          navigate('/?tab=common');
           break;
         case 'procedures':
-          navigate('/procedure-count');
+          navigate('/?tab=procedures');
           break;
         default:
           navigate('/');
