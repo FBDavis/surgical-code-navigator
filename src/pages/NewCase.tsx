@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { TutorialTooltip } from '@/components/TutorialTooltip';
 import { newCaseTutorial } from '@/components/TutorialData';
+import { calculateAdjustedRVUs, calculateAdjustedValue } from '@/lib/rvu-calculations';
 
 interface CPTCode {
   code: string;
@@ -229,8 +230,9 @@ export const NewCase = () => {
     });
   };
 
-  const totalRVUs = selectedCodes.reduce((sum, code) => sum + code.rvu, 0);
-  const estimatedValue = totalRVUs * rvuRate;
+  const rvuCalculation = calculateAdjustedRVUs(selectedCodes);
+  const totalRVUs = rvuCalculation.totalRVUs;
+  const estimatedValue = calculateAdjustedValue(selectedCodes, rvuRate);
 
   const handleSaveCase = async () => {
     if (!user) {

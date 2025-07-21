@@ -25,6 +25,7 @@ import {
   Eye,
   Filter
 } from 'lucide-react';
+import { calculateAdjustedRVUs, calculateAdjustedValue } from '@/lib/rvu-calculations';
 
 interface Case {
   id: string;

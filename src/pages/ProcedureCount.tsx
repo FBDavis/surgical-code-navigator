@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Calendar, TrendingUp, Filter, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { calculateAdjustedRVUs, calculateAdjustedValue } from '@/lib/rvu-calculations';
 
 interface ProcedureData {
   id: string;
