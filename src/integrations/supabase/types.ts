@@ -1041,6 +1041,10 @@ export type Database = {
         Args: { user_email: string }
         Returns: boolean
       }
+      recalculate_case_rvus: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       reset_user_data: {
         Args: Record<PropertyKey, never>
         Returns: undefined
