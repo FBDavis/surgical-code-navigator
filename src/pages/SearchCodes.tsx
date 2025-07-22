@@ -278,6 +278,78 @@ export const SearchCodes = () => {
         </Card>
       )}
 
+      {lastQuery && (primaryCodes.length > 0 || associatedCodes.length > 0) && (
+        <Card className="p-4 bg-medical-light border-medical-accent/20">
+          <div className="flex items-start gap-2">
+            <FileText className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-primary">Analyzed Procedure:</p>
+              <p className="text-sm text-muted-foreground mt-1">{lastQuery}</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* CPT CODE SECTIONS - MOVED TO TOP FOR EASY ACCESS */}
+      {(primaryCodes.length > 0 || associatedCodes.length > 0) && (
+        <div className="space-y-6">
+          {primaryCodes.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">Primary CPT Codes</h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setShowChat(true)}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Chat with AI
+                  </Button>
+                  <Badge variant="outline" className="border-primary text-primary">
+                    {primaryCodes.length} primary codes
+                  </Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {primaryCodes.map((code) => (
+                  <CPTCodeCard
+                    key={code.code}
+                    cptCode={code}
+                    onAdd={handleAddCode}
+                    compensationRate={52}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {associatedCodes.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">Commonly Associated Codes</h2>
+                <Badge variant="secondary" className="border-muted-foreground/20">
+                  {associatedCodes.length} associated codes
+                </Badge>
+              </div>
+              
+              <div className="space-y-3">
+                {associatedCodes.map((code) => (
+                  <CPTCodeCard
+                    key={code.code}
+                    cptCode={code}
+                    onAdd={handleAddCode}
+                    compensationRate={52}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SUGGESTIONS AND RECOMMENDATIONS - MOVED BELOW CODES */}
       {showSuggestions && dictationSuggestions && (
         <Card className="p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/20 dark:border-yellow-700/50">
           <div className="flex items-center justify-between mb-4">
@@ -352,76 +424,6 @@ export const SearchCodes = () => {
             </div>
           </div>
         </Card>
-      )}
-
-      {lastQuery && (primaryCodes.length > 0 || associatedCodes.length > 0) && (
-        <Card className="p-4 bg-medical-light border-medical-accent/20">
-          <div className="flex items-start gap-2">
-            <FileText className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-primary">Analyzed Procedure:</p>
-              <p className="text-sm text-muted-foreground mt-1">{lastQuery}</p>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {(primaryCodes.length > 0 || associatedCodes.length > 0) && (
-        <div className="space-y-6">
-          {primaryCodes.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">Primary CPT Codes</h2>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setShowChat(true)}
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Chat with AI
-                  </Button>
-                  <Badge variant="outline" className="border-primary text-primary">
-                    {primaryCodes.length} primary codes
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                {primaryCodes.map((code) => (
-                  <CPTCodeCard
-                    key={code.code}
-                    cptCode={code}
-                    onAdd={handleAddCode}
-                    compensationRate={52}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {associatedCodes.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">Commonly Associated Codes</h2>
-                <Badge variant="secondary" className="border-muted-foreground/20">
-                  {associatedCodes.length} associated codes
-                </Badge>
-              </div>
-              
-              <div className="space-y-3">
-                {associatedCodes.map((code) => (
-                  <CPTCodeCard
-                    key={code.code}
-                    cptCode={code}
-                    onAdd={handleAddCode}
-                    compensationRate={52}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
       )}
 
       {selectedCodes.length > 0 && (

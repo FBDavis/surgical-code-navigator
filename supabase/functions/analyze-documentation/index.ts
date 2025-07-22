@@ -56,13 +56,38 @@ serve(async (req) => {
     const selectedCodesStr = selectedCodes.map((c: any) => `${c.code} (${c.description})`).join(', ')
     const specialtyContext = specialty ? ` This is for ${specialty.replace('_', ' ')} specialty.` : ''
 
+    // Define codes that typically don't require laterality
+    const nonLateralCodes = [
+      // General/abdominal procedures
+      '44970', '47562', '47563', '49650', '43770', '44180', '44238', '44970',
+      // Cardiovascular procedures
+      '33533', '33534', '33535', '33536', '93017', '93303', '93306', '93307',
+      // Endoscopic procedures
+      '43235', '43239', '43249', '43270', '45378', '45380', '45385',
+      // Anesthesia codes
+      '00100', '00102', '00103', '00104', '00120', '00124', '00126',
+      // Pathology codes
+      '88305', '88307', '88309', '88311', '88312', '88313', '88314',
+      // Radiology codes (unless specifically bilateral)
+      '70450', '70460', '70470', '71250', '71260', '71270', '72125', '72126', '72127',
+      // Laboratory codes
+      '80047', '80048', '80050', '80053', '80061', '85025', '85027',
+      // E&M codes
+      '99201', '99202', '99203', '99204', '99205', '99211', '99212', '99213', '99214', '99215'
+    ];
+
     const prompt = `You are a medical coding compliance expert. Analyze this operative dictation for documentation completeness and billing compliance issues.${specialtyContext}
 
 Dictation: "${dictationText}"
 ${selectedCodes.length > 0 ? `Selected CPT Codes: ${selectedCodesStr}` : ''}
 
+IMPORTANT LATERALITY GUIDANCE:
+- Only flag missing laterality for codes that typically require it (orthopedic, ophthalmology, ENT, vascular procedures on paired organs/structures)
+- Do NOT flag laterality issues for these types of codes: ${nonLateralCodes.join(', ')} and similar general/systemic procedures
+- Focus laterality warnings on procedures involving paired anatomical structures (shoulders, knees, eyes, ears, kidneys, breasts, hands, feet, etc.)
+
 Analyze for:
-1. CRITICAL missing elements for billing (laterality, depth, specific anatomy)
+1. CRITICAL missing elements for billing (laterality for paired structures only, depth, specific anatomy)
 2. Incomplete documentation that could lead to claim denials
 3. Required modifiers based on the procedures described
 4. Potential bundling violations (CCI edits)
