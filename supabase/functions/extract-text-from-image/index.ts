@@ -18,9 +18,9 @@ serve(async (req) => {
       throw new Error('No image data provided')
     }
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    const openaiApiKey = Deno.env.get('OpCoder AI Key')
     if (!openaiApiKey) {
-      throw new Error('OPENAI_API_KEY not configured')
+      throw new Error('OpCoder AI Key not configured')
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
