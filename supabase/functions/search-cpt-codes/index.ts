@@ -32,7 +32,7 @@ serve(async (req) => {
     
     console.log('Search CPT codes request:', { procedureDescription, specialty });
     
-    const openaiApiKey = Deno.env.get('OpCoder AI Key')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiApiKey) {
       throw new Error('OpCoder AI Key not configured')
     }
