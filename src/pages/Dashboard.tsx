@@ -329,7 +329,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             title="Analytics"
             description="Detailed RVU analytics and reporting dashboard"
             icon={BarChart3}
-            onClick={() => handleNavigation('analytics')}
+            onClick={() => handleNavigation('viewcases')}
             gradient="from-orange-500/20 to-orange-600/5"
           />
           
@@ -360,7 +360,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 title="Analytics"
                 description="RVU tracking"
                 icon={BarChart3}
-                onClick={() => handleNavigation('analytics')}
+                onClick={() => handleNavigation('viewcases')}
                 gradient="from-orange-500/20 to-orange-600/5"
               />
             </div>
