@@ -42,16 +42,17 @@ const CaseEditor = ({ case_, caseIndex, onUpdate, trigger }: CaseEditorProps) =>
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Just update local state and close dialog for draft mode
     onUpdate(editingCase);
     setIsOpen(false);
   };
 
-  const handleCompleteCase = async () => {
+  const handleSaveToDatabase = async () => {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please log in to complete cases.",
+        description: "Please log in to save cases.",
         variant: "destructive",
       });
       return;
@@ -104,16 +105,16 @@ const CaseEditor = ({ case_, caseIndex, onUpdate, trigger }: CaseEditorProps) =>
       if (codesError) throw codesError;
 
       toast({
-        title: "Case Completed",
-        description: "Case has been successfully added to your database.",
+        title: "Case Saved Successfully",
+        description: "Case has been added to your database and is now visible in View Cases.",
       });
       
       setIsOpen(false);
     } catch (error) {
-      console.error('Error completing case:', error);
+      console.error('Error saving case:', error);
       toast({
         title: "Error",
-        description: "Failed to complete case. Please try again.",
+        description: "Failed to save case. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -390,10 +391,10 @@ const CaseEditor = ({ case_, caseIndex, onUpdate, trigger }: CaseEditorProps) =>
             </Button>
             <Button onClick={handleSave} variant="outline" className="flex items-center gap-2">
               <Save className="w-4 h-4" />
-              Save Changes
+              Save Draft
             </Button>
             <Button 
-              onClick={handleCompleteCase} 
+              onClick={handleSaveToDatabase} 
               disabled={isCompletingCase}
               className="flex items-center gap-2"
             >
@@ -402,7 +403,7 @@ const CaseEditor = ({ case_, caseIndex, onUpdate, trigger }: CaseEditorProps) =>
               ) : (
                 <Check className="w-4 h-4" />
               )}
-              {isCompletingCase ? "Completing..." : "Complete Case"}
+              {isCompletingCase ? "Saving..." : "Save Case"}
             </Button>
           </div>
         </div>
