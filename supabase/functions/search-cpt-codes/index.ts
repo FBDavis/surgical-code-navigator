@@ -23,11 +23,14 @@ interface SearchResponse {
 }
 
 serve(async (req) => {
+  console.log('Search CPT codes function called, method:', req.method)
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log('Processing search request...')
     const { procedureDescription, specialty } = await req.json()
     
     console.log('Search CPT codes request:', { procedureDescription, specialty });
