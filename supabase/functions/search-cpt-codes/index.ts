@@ -7,19 +7,19 @@ const corsHeaders = {
 }
 
 interface CPTCode {
-  code: string;
-  description: string;
-  rvu: number;
-  modifiers?: string[];
-  category: string;
-  is_primary?: boolean;
-  position?: number;
-  whenNeeded?: string;
+  code: string
+  description: string
+  rvu: number
+  modifiers?: string[]
+  category: string
+  is_primary?: boolean
+  position?: number
+  whenNeeded?: string
 }
 
 interface SearchResponse {
-  primaryCodes: CPTCode[];
-  associatedCodes: CPTCode[];
+  primaryCodes: CPTCode[]
+  associatedCodes: CPTCode[]
 }
 
 serve(async (req) => {
@@ -37,46 +37,46 @@ serve(async (req) => {
       throw new Error('OpCoder AI Key not configured')
     }
 
-    // First, get primary CPT codes
+    // Single optimized prompt for both primary and associated codes
     const specialtyContext = specialty ? ` Focus specifically on ${specialty.replace('_', ' ')} procedures and commonly used codes in this specialty.` : '';
     
-    const primaryPrompt = `You are a medical coding expert specializing in ${specialty ? specialty.replace('_', ' ') : 'general medicine'}. Given this surgical procedure description: "${procedureDescription}"${specialtyContext}
+    const optimizedPrompt = `You are a medical coding expert. Given this surgical procedure: "${procedureDescription}"${specialtyContext}
 
-Please identify the PRIMARY CPT codes that would be billable for this specific procedure. 
+Analyze and return BOTH primary billable CPT codes AND commonly associated codes in this EXACT JSON format:
 
-CRITICAL REQUIREMENTS:
-1. Check for CCI (Correct Coding Initiative) bundling rules
-2. Recommend proper modifiers (-59, -51, -RT, -LT, -25, etc.) to prevent denials
-3. Consider laterality requirements (right/left procedures need RT/LT modifiers)
-4. Identify procedures that require -25 modifier for E&M services
-5. Flag potential unbundling opportunities with -59 modifier
-6. Consider Medicare LCD/NCD compliance
-
-For each code, provide:
-1. The CPT code number
-2. A brief description  
-3. The current RVU value (approximate if exact not known)
-4. Required modifiers with explanations
-5. The category (Surgery, Radiology, etc.)
-6. Position order (1 for primary, 2 for secondary, etc.)
-7. Bundling warnings if applicable
-
-Format your response as a JSON array of objects with this structure:
 {
-  "code": "12345",
-  "description": "Brief description",
-  "rvu": 10.5,
-  "modifiers": ["59", "RT"],
-  "category": "Surgery",
-  "is_primary": true,
-  "position": 1,
-  "bundlingWarning": "May bundle with 12346 - use modifier -59 if distinct",
-  "laterality": "required"
+  "primaryCodes": [
+    {
+      "code": "XXXXX",
+      "description": "Brief description",
+      "rvu": X.XX,
+      "modifiers": ["XX", "YY"],
+      "category": "surgery|anesthesia|radiology|pathology|medicine",
+      "is_primary": true,
+      "position": 1,
+      "whenNeeded": "Brief note"
+    }
+  ],
+  "associatedCodes": [
+    {
+      "code": "XXXXX", 
+      "description": "Brief description",
+      "rvu": X.XX,
+      "modifiers": ["XX"],
+      "category": "surgery|anesthesia|radiology|pathology|medicine",
+      "is_primary": false,
+      "position": 2,
+      "whenNeeded": "Brief note"
+    }
+  ]
 }
 
-Order the results by billing priority and RVU value from highest to lowest.`
+Primary codes: Main billable procedures (typically 1-3 codes, highest RVU)
+Associated codes: Additional services like anesthesia, imaging, pathology, add-ons
 
-    const primaryResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+Order by RVU value descending. Include realistic RVU values and relevant modifiers.`
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openaiApiKey}`,
@@ -87,11 +87,11 @@ Order the results by billing priority and RVU value from highest to lowest.`
         messages: [
           {
             role: 'system',
-            content: 'You are a medical coding expert specializing in CPT codes and RVU values. Always respond with valid JSON only.'
+            content: 'You are a medical coding expert specializing in CPT codes and RVU values. Always respond with valid JSON only. Be concise and accurate.'
           },
           {
             role: 'user',
-            content: primaryPrompt
+            content: optimizedPrompt
           }
         ],
         max_tokens: 2000,
@@ -99,171 +99,69 @@ Order the results by billing priority and RVU value from highest to lowest.`
       }),
     })
 
-    if (!primaryResponse.ok) {
-      throw new Error(`OpenAI API error: ${primaryResponse.statusText}`)
+    if (!response.ok) {
+      console.error('OpenAI API error:', response.statusText)
+      throw new Error(`OpenAI API error: ${response.statusText}`)
     }
 
-    const primaryData = await primaryResponse.json()
-    const primaryContent = primaryData.choices[0]?.message?.content
+    const data = await response.json()
+    const content = data.choices[0]?.message?.content
 
-    if (!primaryContent) {
-      throw new Error('No response from OpenAI for primary codes')
+    if (!content) {
+      throw new Error('No response from OpenAI')
     }
 
-    // Parse primary codes
-    let primaryCodes: CPTCode[]
+    console.log('OpenAI response received, parsing...')
+
+    // Parse the response
+    let parsedResponse
     try {
-      primaryCodes = JSON.parse(primaryContent)
-    } catch (e) {
-      const jsonMatch = primaryContent.match(/\[[\s\S]*\]/)
-      if (jsonMatch) {
-        primaryCodes = JSON.parse(jsonMatch[0])
-      } else {
-        throw new Error('Invalid JSON response from OpenAI for primary codes')
-      }
+      // Clean up the response if it has markdown code blocks
+      const cleanContent = content.replace(/```json\n?/g, '').replace(/\n?```/g, '').trim()
+      parsedResponse = JSON.parse(cleanContent)
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError)
+      console.error('Content:', content)
+      throw new Error('Invalid JSON response from OpenAI')
     }
 
-    // Get commonly associated codes
-    const primaryCodesStr = primaryCodes.map(c => `${c.code} (${c.description})`).join(', ')
-    const specialtyAssociatedContext = specialty ? ` Focus on codes commonly used together in ${specialty.replace('_', ' ')} practice.` : '';
-    
-    const associatedPrompt = `You are a medical coding expert specializing in ${specialty ? specialty.replace('_', ' ') : 'general medicine'}. Given these PRIMARY CPT codes: ${primaryCodesStr}${specialtyAssociatedContext}
+    // Validate and structure the response
+    const primaryCodes = parsedResponse.primaryCodes || []
+    const associatedCodes = parsedResponse.associatedCodes || []
 
-Please identify COMMONLY ASSOCIATED CPT codes that are frequently billed together with these SPECIFIC primary procedures.
+    // Sort by RVU value descending
+    const sortedPrimary = primaryCodes.sort((a: any, b: any) => (b.rvu || 0) - (a.rvu || 0))
+    const sortedAssociated = associatedCodes.sort((a: any, b: any) => (b.rvu || 0) - (a.rvu || 0))
 
-CRITICAL REQUIREMENTS:
-1. Only suggest codes that are anatomically and procedurally COMPATIBLE with the primary procedure
-2. DO NOT suggest codes for different anatomical locations (e.g., if primary is hip surgery, do NOT suggest knee codes)
-3. Focus on the SAME ANATOMICAL REGION and SAME OPERATIVE SESSION
-4. Verify codes are procedurally appropriate for the same surgical approach
-
-ADVANCED ANALYSIS REQUIRED:
-1. Check CCI bundling rules between primary and associated codes
-2. Identify codes that require modifier -51 (multiple procedures)
-3. Flag codes that may need modifier -59 (distinct procedural service)
-4. Consider anatomical modifiers (RT/LT, F1-F9 for digits)
-5. Evaluate add-on codes (+) that don't require modifier -51
-6. Check for Medicare coverage limitations and LCD requirements
-
-Associated codes should include ONLY:
-- Complementary procedures performed on the SAME anatomical area
-- Add-on procedures specific to the primary procedure type
-- Diagnostic procedures directly supporting the SAME anatomical procedure
-- Closure/reconstruction codes for the SAME surgical site
-
-EXCLUDE:
-- Procedures on different anatomical locations
-- Unrelated surgical specialties
-- Procedures requiring separate incisions on different body parts
-
-For each associated code, provide:
-1. The CPT code number
-2. A brief description
-3. The current RVU value
-4. Required modifiers with explanations
-5. The category
-6. Position order for billing
-7. Bundling analysis and modifier requirements
-8. When this code is appropriate to bill
-
-Format as JSON array with this structure:
-{
-  "code": "12345",
-  "description": "Brief description", 
-  "rvu": 5.2,
-  "modifiers": ["59", "51"],
-  "category": "Surgery",
-  "is_primary": false,
-  "position": 3,
-  "whenNeeded": "When this code is appropriate to bill alongside primary procedure",
-  "bundlingAnalysis": "CCI analysis and modifier requirements",
-  "addOnCode": false
-}`
-
-    const associatedResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a medical coding expert specializing in CPT codes and commonly associated procedures. Always respond with valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: associatedPrompt
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.2,
-      }),
-    })
-
-    let associatedCodes: CPTCode[] = []
-    if (associatedResponse.ok) {
-      const associatedData = await associatedResponse.json()
-      const associatedContent = associatedData.choices[0]?.message?.content
-      
-      if (associatedContent) {
-        try {
-          associatedCodes = JSON.parse(associatedContent)
-        } catch (e) {
-          const jsonMatch = associatedContent.match(/\[[\s\S]*\]/)
-          if (jsonMatch) {
-            associatedCodes = JSON.parse(jsonMatch[0])
-          }
-        }
-      }
-    }
-
-    // Ensure arrays and sort by RVU descending
-    if (!Array.isArray(primaryCodes)) {
-      throw new Error('Primary codes response is not an array')
-    }
-    if (!Array.isArray(associatedCodes)) {
-      associatedCodes = []
-    }
-
-    primaryCodes.sort((a, b) => b.rvu - a.rvu)
-    associatedCodes.sort((a, b) => b.rvu - a.rvu)
-
-    const response: SearchResponse = {
-      primaryCodes,
-      associatedCodes
-    }
-
-    console.log('Search CPT codes response:', { 
-      primaryCount: primaryCodes.length, 
-      associatedCount: associatedCodes.length,
-      primarySample: primaryCodes.slice(0, 2)
-    });
+    console.log(`Returning ${sortedPrimary.length} primary codes and ${sortedAssociated.length} associated codes`)
 
     return new Response(
-      JSON.stringify(response),
-      { 
-        headers: { 
+      JSON.stringify({
+        primaryCodes: sortedPrimary,
+        associatedCodes: sortedAssociated
+      }),
+      {
+        headers: {
           ...corsHeaders,
           'Content-Type': 'application/json'
-        } 
+        }
       }
     )
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in search-cpt-codes function:', error)
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'An error occurred processing your request' 
+      JSON.stringify({
+        error: error.message || 'An error occurred while searching for CPT codes',
+        primaryCodes: [],
+        associatedCodes: []
       }),
-      { 
+      {
         status: 500,
-        headers: { 
+        headers: {
           ...corsHeaders,
           'Content-Type': 'application/json'
-        } 
+        }
       }
     )
   }
