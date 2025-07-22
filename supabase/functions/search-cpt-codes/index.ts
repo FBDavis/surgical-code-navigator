@@ -68,28 +68,33 @@ Guidelines:
 
 Order the results by billing priority and RVU value from highest to lowest.`
 
-    const primaryResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a medical coding expert specializing in CPT codes and RVU values. Always respond with valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: primaryPrompt
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.1,
+    const primaryResponse = await Promise.race([
+      fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a medical coding expert specializing in CPT codes and RVU values. Always respond with valid JSON only.'
+            },
+            {
+              role: 'user',
+              content: primaryPrompt
+            }
+          ],
+          max_tokens: 1500,
+          temperature: 0.1,
+        }),
       }),
-    })
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Primary request timeout')), 25000)
+      )
+    ])
 
     if (!primaryResponse.ok) {
       console.error('Primary OpenAI API error:', primaryResponse.statusText)
@@ -154,28 +159,33 @@ IMPORTANT: If no associated codes commonly apply to this procedure type, return 
 
 Return only valid, realistic associated codes that would commonly be billed alongside this procedure type.`
 
-    const associatedResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a medical coding expert specializing in CPT codes and commonly associated procedures. Always respond with valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: associatedPrompt
-          }
-        ],
-        max_tokens: 1500,
-        temperature: 0.1,
+    const associatedResponse = await Promise.race([
+      fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a medical coding expert specializing in CPT codes and commonly associated procedures. Always respond with valid JSON only.'
+            },
+            {
+              role: 'user',
+              content: associatedPrompt
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.1,
+        }),
       }),
-    })
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Associated request timeout')), 20000)
+      )
+    ])
 
     if (!associatedResponse.ok) {
       console.error('Associated OpenAI API error:', associatedResponse.statusText)
