@@ -31,9 +31,9 @@ serve(async (req) => {
       throw new Error('No CPT codes provided')
     }
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    const openaiApiKey = Deno.env.get('OpCoder AI Key')
     if (!openaiApiKey) {
-      throw new Error('OpenAI API key not configured')
+      throw new Error('OpCoder AI Key not configured')
     }
 
     // Create a professional wallpaper design prompt

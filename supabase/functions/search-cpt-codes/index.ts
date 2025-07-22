@@ -32,9 +32,9 @@ serve(async (req) => {
     
     console.log('Search CPT codes request:', { procedureDescription, specialty });
     
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    const openaiApiKey = Deno.env.get('OpCoder AI Key')
     if (!openaiApiKey) {
-      throw new Error('OpenAI API key not configured')
+      throw new Error('OpCoder AI Key not configured')
     }
 
     // First, get primary CPT codes
@@ -83,7 +83,7 @@ Order the results by billing priority and RVU value from highest to lowest.`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           {
             role: 'system',
@@ -187,7 +187,7 @@ Format as JSON array with this structure:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           {
             role: 'system',
