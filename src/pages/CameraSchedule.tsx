@@ -64,11 +64,13 @@ const CameraSchedule = () => {
       description: "Extracting cases and applying CPT codes...",
     });
     
-    if (text.trim()) {
-      await parseScheduleWithCodes(text);
+    try {
+      if (text.trim()) {
+        await parseScheduleWithCodes(text);
+      }
+    } finally {
+      setIsProcessingPhoto(false);
     }
-    
-    setIsProcessingPhoto(false);
   };
 
   const parseScheduleWithCodes = async (text: string) => {
