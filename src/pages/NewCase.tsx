@@ -229,7 +229,7 @@ export const NewCase = () => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigate('/view-cases')}
+            onClick={() => navigate('/viewcases')}
           >
             View All Cases
           </Button>
