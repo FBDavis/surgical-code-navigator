@@ -52,12 +52,21 @@ const CameraCapture = ({
         const { data, error } = await Promise.race([extractPromise, timeoutPromise]) as any;
 
         console.log('Extract text response:', { data, error });
+        console.log('Full response data:', JSON.stringify(data, null, 2));
+        console.log('Full error details:', JSON.stringify(error, null, 2));
 
         if (error) {
+          console.error('Edge function error:', error);
           throw new Error(error.message || 'Failed to extract text from image');
         }
 
+        if (!data) {
+          console.error('No data returned from edge function');
+          throw new Error('No response data from text extraction service');
+        }
+
         const extractedText = data?.extractedText || '';
+        console.log('Extracted text length:', extractedText.length);
         onImageCaptured(`data:image/jpeg;base64,${image.base64String}`, extractedText);
         
         toast({
