@@ -48,7 +48,29 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   useEffect(() => {
     setMounted(true);
     
-    // Don't auto-show tutorial hub - let users trigger it manually when needed
+    // Check if this is a brand new user (first time ever logging in)
+    const hasSeenOnboarding = localStorage.getItem(`onboarding-seen-${user?.id}`);
+    const isNewUser = !hasSeenOnboarding && user && completedTutorials.length === 0;
+    
+    // Only show for truly new users (account created within last 5 minutes)
+    if (isNewUser && user) {
+      const userCreatedAt = new Date(user.created_at).getTime();
+      const now = Date.now();
+      const fiveMinutesAgo = now - (5 * 60 * 1000); // 5 minutes in milliseconds
+      
+      const isTrulyNewUser = userCreatedAt > fiveMinutesAgo;
+      
+      if (isTrulyNewUser) {
+        // Delay to allow UI to settle
+        setTimeout(() => {
+          setShowTutorialHub(true);
+          localStorage.setItem(`onboarding-seen-${user.id}`, 'true');
+        }, 2000);
+      } else {
+        // Mark as seen for existing users to prevent future popups
+        localStorage.setItem(`onboarding-seen-${user.id}`, 'true');
+      }
+    }
     
     // Show referral banner for subscribed users after some interaction
     if (subscriptionStatus?.subscribed && user) {
