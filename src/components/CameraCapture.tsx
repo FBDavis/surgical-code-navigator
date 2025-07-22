@@ -23,6 +23,7 @@ const CameraCapture = ({
   const { toast } = useToast();
 
   const takePicture = async () => {
+    console.log('Starting camera capture...');
     try {
       setIsProcessing(true);
       
@@ -34,12 +35,16 @@ const CameraCapture = ({
       });
 
       if (image.base64String) {
+        console.log('Image captured successfully, extracting text...');
         setCapturedImage(`data:image/jpeg;base64,${image.base64String}`);
         
         // Extract text from the image
+        console.log('Calling extract-text-from-image function...');
         const { data, error } = await supabase.functions.invoke('extract-text-from-image', {
           body: { imageBase64: image.base64String }
         });
+
+        console.log('Extract text response:', { data, error });
 
         if (error) {
           throw new Error(error.message);
@@ -54,6 +59,7 @@ const CameraCapture = ({
         });
       }
     } catch (error) {
+      console.error("Detailed error taking picture:", error);
       console.error("Error taking picture:", error);
       toast({
         title: "Error",
