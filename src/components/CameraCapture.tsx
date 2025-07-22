@@ -38,16 +38,23 @@ const CameraCapture = ({
         console.log('Image captured successfully, extracting text...');
         setCapturedImage(`data:image/jpeg;base64,${image.base64String}`);
         
-        // Extract text from the image
+        // Extract text from the image with timeout
         console.log('Calling extract-text-from-image function...');
-        const { data, error } = await supabase.functions.invoke('extract-text-from-image', {
+        
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Text extraction timeout - please try again')), 30000)
+        );
+        
+        const extractPromise = supabase.functions.invoke('extract-text-from-image', {
           body: { imageBase64: image.base64String }
         });
+        
+        const { data, error } = await Promise.race([extractPromise, timeoutPromise]) as any;
 
         console.log('Extract text response:', { data, error });
 
         if (error) {
-          throw new Error(error.message);
+          throw new Error(error.message || 'Failed to extract text from image');
         }
 
         const extractedText = data?.extractedText || '';
@@ -85,13 +92,23 @@ const CameraCapture = ({
       if (image.base64String) {
         setCapturedImage(`data:image/jpeg;base64,${image.base64String}`);
         
-        // Extract text from the image
-        const { data, error } = await supabase.functions.invoke('extract-text-from-image', {
+        // Extract text from the image with timeout
+        console.log('Calling extract-text-from-image function for gallery image...');
+        
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Text extraction timeout - please try again')), 30000)
+        );
+        
+        const extractPromise = supabase.functions.invoke('extract-text-from-image', {
           body: { imageBase64: image.base64String }
         });
+        
+        const { data, error } = await Promise.race([extractPromise, timeoutPromise]) as any;
+
+        console.log('Extract text response:', { data, error });
 
         if (error) {
-          throw new Error(error.message);
+          throw new Error(error.message || 'Failed to extract text from image');
         }
 
         const extractedText = data?.extractedText || '';
