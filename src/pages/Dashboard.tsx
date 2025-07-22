@@ -4,6 +4,7 @@ import { HomeCard } from '@/components/HomeCard';
 import { StatsOverview } from '@/components/StatsOverview';
 import { FloatingReferralBanner } from '@/components/ReferralNotifications';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDashboardStats } from '@/hooks/use-dashboard-stats';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   const [showTutorialHub, setShowTutorialHub] = useState(false);
   const [showReferralBanner, setShowReferralBanner] = useState(false);
   const { completedTutorials, startTutorial } = useTutorial();
+  const dashboardStats = useDashboardStats();
   
   // Check if user is in guest mode
   const isGuest = !user && new URLSearchParams(window.location.search).get('guest') === 'true';
@@ -82,12 +84,17 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     }
   }, [user, completedTutorials, subscriptionStatus]);
 
-  // Start with zero data for new accounts
-  const totalSearches = 0;
-  const recentSearches = 0;
-  const thisMonth = 0;
-  const totalRVUs = 0;
-  const commonProcedures = 0;
+  // Get real data from the hook
+  const {
+    totalSearches,
+    recentSearches,
+    thisMonth,
+    totalRVUs,
+    commonProcedures,
+    recentCodes,
+    topCodes,
+    loading: statsLoading
+  } = dashboardStats;
 
   const handleNavigation = (tab: string) => {
     if (onTabChange) {
@@ -131,9 +138,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
     navigate('/auth?auth=true');
   };
 
-  const recentCodes: Array<{ code: string; description: string; rvu: number; date: string }> = [];
-
-  const topCodes: Array<{ code: string; count: number; rvu: number }> = [];
+  // Recent codes and top codes are now provided by the hook
 
   if (!mounted) return null;
 
@@ -400,7 +405,16 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentCodes.map((item, index) => (
+                {statsLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading recent activity...
+                  </div>
+                ) : recentCodes.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No recent activity. Start by searching for codes or creating cases!
+                  </div>
+                ) : (
+                  recentCodes.map((item, index) => (
                   <div key={index} className="flex items-center justify-between py-3 border-b border-border/30 last:border-0">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -415,7 +429,8 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                       <p className="text-sm font-medium text-primary">{item.rvu} RVU</p>
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -430,7 +445,16 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {topCodes.map((item, index) => (
+                {statsLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading procedure data...
+                  </div>
+                ) : topCodes.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No procedures yet. Create your first case to see your most common procedures!
+                  </div>
+                ) : (
+                  topCodes.map((item, index) => (
                   <div key={index} className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
                       <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
@@ -445,7 +469,8 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                       <p className="text-xs text-muted-foreground">{item.rvu} RVU each</p>
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
