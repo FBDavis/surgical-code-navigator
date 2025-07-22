@@ -89,6 +89,8 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
           navigate('/new-case');
           break;
         case 'analytics':
+          navigate('/view-cases');
+          break;
         case 'viewcases':
           navigate('/view-cases');
           break;
