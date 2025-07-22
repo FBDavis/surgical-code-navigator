@@ -311,7 +311,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             title="Common Procedures"
             description="Access your most frequently used CPT codes and procedures"
             icon={History}
-            onClick={() => {}}
+            onClick={() => handleNavigation('viewcases')}
             count={commonProcedures}
             gradient="from-green-500/20 to-green-600/5"
           />
@@ -320,7 +320,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             title="Total Procedure Count"
             description="View comprehensive statistics and procedure analytics"
             icon={FileText}
-            onClick={() => {}}
+            onClick={() => handleNavigation('viewcases')}
             count={thisMonth}
             gradient="from-purple-500/20 to-purple-600/5"
           />
@@ -351,7 +351,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 title="Common"
                 description="Most used codes"
                 icon={History}
-                onClick={() => {}}
+                onClick={() => handleNavigation('viewcases')}
                 count={commonProcedures}
                 gradient="from-green-500/20 to-green-600/5"
               />
@@ -370,7 +370,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 title="Procedures"
                 description="This month"
                 icon={FileText}
-                onClick={() => {}}
+                onClick={() => handleNavigation('viewcases')}
                 count={thisMonth}
                 gradient="from-purple-500/20 to-purple-600/5"
               />
