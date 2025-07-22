@@ -497,100 +497,241 @@ const CameraSchedule = () => {
                        </div>
                      </div>
 
-                     {parsedSchedule.cases.map((case_, index) => (
-                       <Card key={index} className={case_.selected ? "border-primary" : ""}>
-                         <CardContent className="p-4">
-                           <div className="space-y-3">
-                             <div className="flex items-start justify-between">
-                               <div className="flex items-start gap-3">
-                                 <Checkbox
-                                   checked={case_.selected}
-                                   onCheckedChange={() => toggleCaseSelection(index)}
-                                 />
-                                 <div>
-                                   <h4 className="font-semibold">{case_.procedure}</h4>
-                                   {case_.patientIdentifier && (
-                                     <p className="text-sm text-muted-foreground">
-                                       Patient: {case_.patientIdentifier}
-                                     </p>
-                                   )}
-                                   {case_.surgeon && (
-                                     <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                       <Users className="w-3 h-3" />
-                                       {case_.surgeon}
-                                     </p>
-                                   )}
-                                 </div>
-                               </div>
-                               <div className="text-right text-sm text-muted-foreground">
-                                 {case_.date && <div>{case_.date}</div>}
-                                 {case_.time && <div>{case_.time}</div>}
-                               </div>
-                             </div>
-                             
-                             <div className="space-y-2">
-                               <div className="flex items-center justify-between">
-                                 <Label className="text-sm font-medium">CPT Codes</Label>
-                                 <Button
-                                   size="sm"
-                                   variant="outline"
-                                   onClick={() => addCPTCode(index)}
-                                   className="h-6 px-2"
-                                 >
-                                   <Plus className="w-3 h-3" />
-                                 </Button>
-                               </div>
-                               
-                               {case_.cptCodes && case_.cptCodes.length > 0 ? (
-                                 <div className="space-y-2">
-                                   {case_.cptCodes.map((code, codeIndex) => (
-                                     <div key={codeIndex} className="flex items-center gap-2 p-2 border rounded">
-                                       <div className="flex-1 grid grid-cols-3 gap-2">
-                                         <Input
-                                           placeholder="CPT Code"
-                                           value={code.code}
-                                           onChange={(e) => updateCPTCode(index, codeIndex, 'code', e.target.value)}
-                                           className="h-8"
-                                         />
-                                         <Input
-                                           placeholder="Description"
-                                           value={code.description}
-                                           onChange={(e) => updateCPTCode(index, codeIndex, 'description', e.target.value)}
-                                           className="h-8"
-                                         />
-                                         <Input
-                                           type="number"
-                                           placeholder="RVU"
-                                           value={code.rvu}
-                                           onChange={(e) => updateCPTCode(index, codeIndex, 'rvu', parseFloat(e.target.value) || 0)}
-                                           className="h-8"
-                                         />
-                                       </div>
-                                       <Badge variant={codeIndex === 0 ? "default" : "secondary"}>
-                                         {codeIndex === 0 ? "PRIMARY" : "SECONDARY"}
-                                       </Badge>
-                                       <Button
-                                         size="sm"
-                                         variant="outline"
-                                         onClick={() => removeCPTCode(index, codeIndex)}
-                                         className="h-6 w-6 p-0"
-                                       >
-                                         <Minus className="w-3 h-3" />
-                                       </Button>
-                                     </div>
-                                   ))}
-                                 </div>
-                               ) : (
-                                 <div className="p-2 border rounded text-center text-muted-foreground">
-                                   No CPT codes identified
-                                 </div>
-                               )}
-                             </div>
-                           </div>
-                         </CardContent>
-                       </Card>
-                     ))}
-                  </div>
+                      {parsedSchedule.cases.map((case_, index) => (
+                        <Card key={index} className={`relative border transition-all duration-200 ${
+                          case_.selected 
+                            ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary/20' 
+                            : 'border-border hover:border-primary/50'
+                        }`}>
+                          <CardContent className="p-4">
+                            <div className="space-y-4">
+                              {/* Case Header */}
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3">
+                                  <Checkbox
+                                    checked={case_.selected}
+                                    onCheckedChange={() => toggleCaseSelection(index)}
+                                    className="mt-1"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Badge variant="outline" className="text-xs">
+                                        Case {index + 1}
+                                      </Badge>
+                                      {case_.selected && (
+                                        <Badge variant="default" className="text-xs bg-primary">
+                                          Selected
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <h4 className="font-semibold text-lg text-foreground leading-tight mb-2">
+                                      {case_.procedure}
+                                    </h4>
+                                    <div className="space-y-1">
+                                      {case_.patientIdentifier && (
+                                        <p className="text-sm text-muted-foreground">
+                                          Patient: {case_.patientIdentifier}
+                                        </p>
+                                      )}
+                                      {case_.surgeon && (
+                                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                          <Users className="w-3 h-3" />
+                                          Surgeon: {case_.surgeon}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  {case_.date && (
+                                    <Badge variant="secondary" className="mb-1">
+                                      {case_.date}
+                                    </Badge>
+                                  )}
+                                  {case_.time && (
+                                    <div>
+                                      <Badge variant="secondary">
+                                        {case_.time}
+                                      </Badge>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* CPT Codes Section */}
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-sm font-medium flex items-center gap-2">
+                                    <Trophy className="w-4 h-4 text-primary" />
+                                    CPT Codes & RVUs
+                                  </Label>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => addCPTCode(index)}
+                                    className="h-7 px-2"
+                                  >
+                                    <Plus className="w-3 h-3 mr-1" />
+                                    Add Code
+                                  </Button>
+                                </div>
+                                
+                                {case_.cptCodes && case_.cptCodes.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {case_.cptCodes.map((code, codeIndex) => (
+                                      <div key={codeIndex} className="p-3 border rounded-lg bg-muted/50">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Badge variant={codeIndex === 0 ? "default" : "secondary"} className="text-xs">
+                                            {codeIndex === 0 ? "PRIMARY" : "SECONDARY"}
+                                          </Badge>
+                                          <div className="text-sm font-medium text-primary">
+                                            RVU: {code.rvu || 0}
+                                          </div>
+                                          <div className="ml-auto">
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              onClick={() => removeCPTCode(index, codeIndex)}
+                                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                            >
+                                              <Minus className="w-3 h-3" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                          <Input
+                                            placeholder="CPT Code"
+                                            value={code.code}
+                                            onChange={(e) => updateCPTCode(index, codeIndex, 'code', e.target.value)}
+                                            className="h-8 font-mono"
+                                          />
+                                          <Input
+                                            placeholder="Description"
+                                            value={code.description}
+                                            onChange={(e) => updateCPTCode(index, codeIndex, 'description', e.target.value)}
+                                            className="h-8 md:col-span-2"
+                                          />
+                                        </div>
+                                        <div className="mt-2">
+                                          <Input
+                                            type="number"
+                                            step="0.1"
+                                            placeholder="RVU Value"
+                                            value={code.rvu || 0}
+                                            onChange={(e) => updateCPTCode(index, codeIndex, 'rvu', parseFloat(e.target.value) || 0)}
+                                            className="h-8 w-24"
+                                          />
+                                        </div>
+                                      </div>
+                                    ))}
+                                    
+                                    {/* Case Total */}
+                                    <div className="flex justify-between items-center p-2 bg-primary/10 rounded-lg border border-primary/20">
+                                      <span className="text-sm font-medium text-primary">Case Total RVU:</span>
+                                      <span className="text-lg font-bold text-primary">
+                                        {case_.cptCodes.reduce((sum, code) => sum + (code.rvu || 0), 0).toFixed(1)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="p-4 border-2 border-dashed rounded-lg text-center text-muted-foreground">
+                                    <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm mb-2">No CPT codes identified for this procedure</p>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => addCPTCode(index)}
+                                    >
+                                      <Plus className="w-4 h-4 mr-1" />
+                                      Add CPT Code
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      {/* Enhanced Add to Calendar Section */}
+                      <div className="mt-8 p-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+                        <div className="text-center mb-6">
+                          <h3 className="text-xl font-semibold text-primary mb-2">Ready to Add to Calendar</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Review your selected cases and add them to your surgery calendar
+                          </p>
+                        </div>
+                        
+                        {/* Quick Stats */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                          <div className="text-center p-4 bg-white/50 rounded-lg border">
+                            <div className="text-2xl font-bold text-primary">
+                              {parsedSchedule.cases.filter(c => c.selected).length}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium">Selected Cases</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/50 rounded-lg border">
+                            <div className="text-2xl font-bold text-primary">
+                              {parsedSchedule.cases
+                                .filter(c => c.selected)
+                                .reduce((total, case_) => total + (case_.cptCodes?.length || 0), 0)}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium">Total Codes</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/50 rounded-lg border">
+                            <div className="text-2xl font-bold text-primary">
+                              {parsedSchedule.cases
+                                .filter(c => c.selected)
+                                .reduce((total, case_) => 
+                                  total + (case_.cptCodes?.reduce((sum, code) => sum + (code.rvu || 0), 0) || 0), 0
+                                ).toFixed(1)}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium">Total RVU</div>
+                          </div>
+                          <div className="text-center p-4 bg-white/50 rounded-lg border">
+                            <div className="text-2xl font-bold text-primary">
+                              ${(parsedSchedule.cases
+                                .filter(c => c.selected)
+                                .reduce((total, case_) => 
+                                  total + (case_.cptCodes?.reduce((sum, code) => sum + (code.rvu || 0), 0) || 0), 0
+                                ) * 65).toLocaleString()}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium">Est. Value</div>
+                          </div>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                          <Button 
+                            onClick={() => saveCasesToCalendar(true)}
+                            disabled={isSavingCases || !user || !parsedSchedule.cases.some(c => c.selected)}
+                            className="flex items-center gap-2 bg-primary hover:bg-primary/90 px-8 py-3"
+                            size="lg"
+                          >
+                            <Save className="w-5 h-5" />
+                            {isSavingCases ? "Adding to Calendar..." : "Add Selected to Calendar"}
+                          </Button>
+                          <Button 
+                            onClick={() => saveCasesToCalendar(false)}
+                            disabled={isSavingCases || !user}
+                            variant="outline"
+                            size="lg"
+                            className="px-8 py-3"
+                          >
+                            <Save className="w-5 h-5 mr-2" />
+                            Add All Cases
+                          </Button>
+                        </div>
+                        
+                        {parsedSchedule.cases.filter(c => c.selected).length === 0 && (
+                          <div className="text-center mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p className="text-sm text-yellow-800">
+                              Please select at least one case to add to your calendar
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                   </div>
                 </div>
               ) : (
                 <p className="text-muted-foreground">No cases parsed yet. Please capture and parse a schedule first.</p>
