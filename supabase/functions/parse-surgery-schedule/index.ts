@@ -18,9 +18,9 @@ serve(async (req) => {
       throw new Error('No extracted text provided')
     }
 
-    const openaiApiKey = Deno.env.get('OpCoder AI Key')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiApiKey) {
-      throw new Error('OpCoder AI Key not configured')
+      throw new Error('OpenAI API key not configured')
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -30,7 +30,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',

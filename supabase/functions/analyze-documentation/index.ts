@@ -48,9 +48,9 @@ serve(async (req) => {
       throw new Error('No dictation text provided')
     }
 
-    const openaiApiKey = Deno.env.get('OpCoder AI Key')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiApiKey) {
-      throw new Error('OpCoder AI Key not configured')
+      throw new Error('OpenAI API key not configured')
     }
 
     const selectedCodesStr = selectedCodes.map((c: any) => `${c.code} (${c.description})`).join(', ')

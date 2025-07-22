@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const openaiApiKey = Deno.env.get('OpCoder AI Key');
+const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -22,7 +22,7 @@ serve(async (req) => {
     console.log(`Gathering ACGME data for specialty: ${specialty_name}`);
 
     if (!openaiApiKey) {
-      throw new Error('OpCoder AI Key not found');
+      throw new Error('OpenAI API key not configured');
     }
 
     // Create Supabase client
@@ -66,7 +66,7 @@ Return ONLY the JSON array, no other text.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',

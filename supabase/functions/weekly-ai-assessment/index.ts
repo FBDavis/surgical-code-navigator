@@ -148,7 +148,7 @@ Return your response as JSON with:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'You are a witty AI assistant that creates funny, encouraging awards for surgeons based on their case performance.' },
           { role: 'user', content: prompt }

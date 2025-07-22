@@ -37,9 +37,9 @@ serve(async (req) => {
       throw new Error('No dictation text provided')
     }
 
-    const openaiApiKey = Deno.env.get('OpCoder AI Key')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiApiKey) {
-      throw new Error('OpCoder AI Key not configured')
+      throw new Error('OpenAI API key not configured')
     }
 
     const prompt = `You are a medical coding optimization expert. Analyze this surgical dictation and provide specific suggestions to maximize billing accuracy and RVU capture.
