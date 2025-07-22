@@ -76,7 +76,7 @@ Order the results by billing priority and RVU value from highest to lowest.`
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4.1-2025-04-14',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
@@ -167,7 +167,7 @@ Return only valid, realistic associated codes that would commonly be billed alon
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4.1-2025-04-14',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
