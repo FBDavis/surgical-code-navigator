@@ -89,9 +89,12 @@ const CameraSchedule = () => {
       const casesWithCodes = await Promise.all(
         data.cases.map(async (case_: SurgicalCase) => {
           try {
+            console.log(`Getting CPT codes for procedure: ${case_.procedure}`);
             const { data: codeData, error: codeError } = await supabase.functions.invoke('search-cpt-codes', {
               body: { procedureDescription: case_.procedure }
             });
+
+            console.log(`CPT code response for "${case_.procedure}":`, { codeData, codeError });
 
             if (!codeError && codeData?.primaryCodes?.length > 0) {
               // Take only the most relevant primary code (highest RVU)
