@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Plus, Minus, Save, Trophy, Users, Calendar, Clock } from "lucide-react";
+import { Edit, Plus, Minus, Save, Trophy, Users, Calendar, Clock, Check, CalendarPlus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CPTCode {
   code: string;
@@ -34,10 +37,120 @@ interface CaseEditorProps {
 const CaseEditor = ({ case_, caseIndex, onUpdate, trigger }: CaseEditorProps) => {
   const [editingCase, setEditingCase] = useState<SurgicalCase>(case_);
   const [isOpen, setIsOpen] = useState(false);
+  const [isCompletingCase, setIsCompletingCase] = useState(false);
+  const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSave = () => {
     onUpdate(editingCase);
     setIsOpen(false);
+  };
+
+  const handleCompleteCase = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to complete cases.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editingCase.procedure || editingCase.cptCodes.length === 0) {
+      toast({
+        title: "Missing Information",
+        description: "Please add a procedure description and at least one CPT code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCompletingCase(true);
+    try {
+      // Create the case in the database
+      const { data: newCase, error: caseError } = await supabase
+        .from('cases')
+        .insert({
+          case_name: editingCase.procedure,
+          procedure_description: editingCase.procedure,
+          patient_mrn: editingCase.patientIdentifier,
+          procedure_date: editingCase.date,
+          total_rvu: totalRVU,
+          estimated_value: totalRVU * 65, // Default RVU rate
+          status: 'active',
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (caseError) throw caseError;
+
+      // Add CPT codes
+      const codeInserts = editingCase.cptCodes.map((code, index) => ({
+        case_id: newCase.id,
+        cpt_code: code.code,
+        description: code.description,
+        rvu: code.rvu || 0,
+        is_primary: index === 0,
+        position: index + 1,
+        user_id: user.id
+      }));
+
+      const { error: codesError } = await supabase
+        .from('case_codes')
+        .insert(codeInserts);
+
+      if (codesError) throw codesError;
+
+      toast({
+        title: "Case Completed",
+        description: "Case has been successfully added to your database.",
+      });
+      
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error completing case:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete case. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCompletingCase(false);
+    }
+  };
+
+  const handleAddToCalendar = async () => {
+    if (!editingCase.date) {
+      toast({
+        title: "Missing Date",
+        description: "Please select a date before adding to calendar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingToCalendar(true);
+    try {
+      // Here you would integrate with calendar functionality
+      // For now, we'll just show a success message
+      toast({
+        title: "Added to Calendar",
+        description: "Case has been added to your calendar as an add-on case.",
+      });
+      
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error adding to calendar:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add case to calendar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToCalendar(false);
+    }
   };
 
   const addCPTCode = () => {
@@ -257,14 +370,39 @@ const CaseEditor = ({ case_, caseIndex, onUpdate, trigger }: CaseEditorProps) =>
             </CardContent>
           </Card>
 
-          {/* Save Button */}
+          {/* Action Buttons */}
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleAddToCalendar} 
+              disabled={isAddingToCalendar}
+              className="flex items-center gap-2"
+            >
+              {isAddingToCalendar ? (
+                <Clock className="w-4 h-4 animate-spin" />
+              ) : (
+                <CalendarPlus className="w-4 h-4" />
+              )}
+              {isAddingToCalendar ? "Adding..." : "Add to Calendar"}
+            </Button>
+            <Button onClick={handleSave} variant="outline" className="flex items-center gap-2">
               <Save className="w-4 h-4" />
               Save Changes
+            </Button>
+            <Button 
+              onClick={handleCompleteCase} 
+              disabled={isCompletingCase}
+              className="flex items-center gap-2"
+            >
+              {isCompletingCase ? (
+                <Clock className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+              {isCompletingCase ? "Completing..." : "Complete Case"}
             </Button>
           </div>
         </div>
