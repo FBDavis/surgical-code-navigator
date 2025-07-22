@@ -69,7 +69,7 @@ Style: Clean, professional, medical, high-resolution wallpaper`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
+        model: 'dall-e-3',
         prompt: wallpaperPrompt,
         n: 1,
         size: '1792x1024', // 16:9 aspect ratio for wallpapers

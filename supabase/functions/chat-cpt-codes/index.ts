@@ -68,7 +68,7 @@ Keep responses concise but thorough. Focus on practical coding advice and be spe
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-2025-04-14',
         messages: messages,
         temperature: 0.3,
         max_tokens: 800,

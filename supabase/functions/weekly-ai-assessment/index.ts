@@ -22,9 +22,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const openAIApiKey = Deno.env.get('OpCoder AI Key');
     if (!openAIApiKey) {
-      throw new Error('OpenAI API key not found');
+      throw new Error('OpCoder AI Key not found');
     }
 
     const { user_id, week_start, week_end } = await req.json();
