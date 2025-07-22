@@ -7,12 +7,16 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('Extract text function called, method:', req.method)
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log('Processing request...')
     const { imageBase64 } = await req.json()
+    console.log('Image data received, length:', imageBase64?.length || 'no data')
     
     if (!imageBase64) {
       throw new Error('No image data provided')
