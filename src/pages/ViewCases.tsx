@@ -65,8 +65,13 @@ export const ViewCases = () => {
   const [showCalendar, setShowCalendar] = useState(false);
 
   const fetchCases = async (filter: 'today' | 'week' | 'month' | 'all' | 'custom' = 'all', customDate?: Date) => {
-    if (!user) return;
+    console.log('ViewCases: fetchCases called', { user: !!user, filter, customDate });
+    if (!user) {
+      console.log('ViewCases: No user, returning early');
+      return;
+    }
     
+    console.log('ViewCases: Setting loading true');
     setLoading(true);
     try {
       let query = supabase
@@ -115,24 +120,29 @@ export const ViewCases = () => {
           break;
       }
 
+      console.log('ViewCases: Executing database query...');
       const { data, error } = await query;
 
+      console.log('ViewCases: Query result', { data: data?.length || 0, error });
       if (error) throw error;
 
+      console.log('ViewCases: Setting cases data');
       setCases(data || []);
     } catch (error) {
-      console.error('Error fetching cases:', error);
+      console.error('ViewCases: Error fetching cases:', error);
       toast({
         title: "Error loading cases",
         description: "Unable to load your cases. Please try again.",
         variant: "destructive",
       });
     } finally {
+      console.log('ViewCases: Setting loading false');
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log('ViewCases: useEffect triggered', { user: !!user });
     fetchCases();
   }, [user]);
 
