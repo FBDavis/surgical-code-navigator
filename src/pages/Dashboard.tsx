@@ -48,17 +48,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
   useEffect(() => {
     setMounted(true);
     
-    // Check if this is a new user and show tutorial hub, but only if not currently in a tutorial
-    const hasSeenOnboarding = localStorage.getItem(`onboarding-seen-${user?.id}`);
-    const isNewUser = !hasSeenOnboarding && user && completedTutorials.length === 0;
-    
-    if (isNewUser) {
-      // Delay to allow UI to settle
-      setTimeout(() => {
-        setShowTutorialHub(true);
-        localStorage.setItem(`onboarding-seen-${user.id}`, 'true');
-      }, 2000); // Increased delay to prevent conflicts
-    }
+    // Don't auto-show tutorial hub - let users trigger it manually when needed
     
     // Show referral banner for subscribed users after some interaction
     if (subscriptionStatus?.subscribed && user) {
