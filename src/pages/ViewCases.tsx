@@ -59,6 +59,8 @@ export const ViewCases = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [showCustomDate, setShowCustomDate] = useState(false);
   const [dateRange, setDateRange] = useState<Date | undefined>(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -233,27 +235,52 @@ export const ViewCases = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="all" onClick={() => fetchCases('all')}>
-                All Cases
-              </TabsTrigger>
-              <TabsTrigger value="today" onClick={() => fetchCases('today')}>
-                Today
-              </TabsTrigger>
-              <TabsTrigger value="week" onClick={() => fetchCases('week')}>
-                This Week
-              </TabsTrigger>
-              <TabsTrigger value="month" onClick={() => fetchCases('month')}>
-                This Month
-              </TabsTrigger>
-              <TabsTrigger value="custom">
-                Custom Date
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="custom" className="mt-4">
-              <div className="flex items-center gap-2">
+          {/* Time Filter Dropdown and Custom Date */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <Label htmlFor="timeFilter">Time Period</Label>
+                <Select 
+                  value={timeFilter} 
+                  onValueChange={(value: 'all' | 'today' | 'week' | 'month') => {
+                    setTimeFilter(value);
+                    setShowCustomDate(false);
+                    fetchCases(value);
+                  }}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select time period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Cases</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-end">
+                <Button 
+                  variant={showCustomDate ? "default" : "outline"}
+                  onClick={() => {
+                    setShowCustomDate(!showCustomDate);
+                    if (!showCustomDate) {
+                      setTimeFilter('all'); // Reset time filter when showing custom date
+                    }
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  Custom Date
+                </Button>
+              </div>
+            </div>
+
+            {/* Custom Date Picker */}
+            {showCustomDate && (
+              <div className="p-4 border rounded-lg bg-muted/20">
+                <Label className="text-sm font-medium mb-2 block">Select Custom Date</Label>
                 <Popover open={showCalendar} onOpenChange={setShowCalendar}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
@@ -273,12 +300,13 @@ export const ViewCases = () => {
                         }
                       }}
                       initialFocus
+                      className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
               </div>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
 
           <div className="flex gap-4 mt-4">
             <div className="flex-1">
