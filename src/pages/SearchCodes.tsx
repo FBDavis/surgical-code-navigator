@@ -75,7 +75,7 @@ export const SearchCodes = () => {
   const handleSearch = async (text: string, type: 'voice' | 'photo' | 'text') => {
     setIsProcessing(true);
     setLastQuery(text);
-    setShowDictationTab(false); // Reset dictation tab when doing new search
+    setShowDictationTab(false);
 
     try {
       const { data, error } = await supabase.functions.invoke('search-cpt-codes', {
@@ -85,13 +85,8 @@ export const SearchCodes = () => {
         }
       });
 
-      if (error) {
-        throw error;
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
       const response = data as SearchResponse;
       setPrimaryCodes(response.primaryCodes || []);
@@ -102,7 +97,6 @@ export const SearchCodes = () => {
         description: `Found ${response.primaryCodes?.length || 0} primary codes and ${response.associatedCodes?.length || 0} associated codes`,
       });
 
-      // Don't automatically analyze dictation - wait for user to select codes
     } catch (error) {
       console.error('Search error:', error);
       toast({
