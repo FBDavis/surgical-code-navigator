@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,9 @@ import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { CommonSection } from '@/components/CommonSection';
+import { AnalyticsSection } from '@/components/AnalyticsSection';
+import { ProceduresSection } from '@/components/ProceduresSection';
 import { 
   FileText, 
   Calendar as CalendarIcon, 
@@ -22,7 +26,10 @@ import {
   Trash2,
   Edit,
   Eye,
-  Filter
+  Filter,
+  History,
+  BarChart3,
+  Activity
 } from 'lucide-react';
 
 interface Case {
@@ -54,6 +61,7 @@ interface CaseCode {
 export const ViewCases = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +71,10 @@ export const ViewCases = () => {
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [dateRange, setDateRange] = useState<Date | undefined>(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get('tab');
+    return tab === 'common' || tab === 'analytics' || tab === 'procedures' ? tab : 'cases';
+  });
 
   const fetchCases = async (filter: 'today' | 'week' | 'month' | 'all' | 'custom' = 'all', customDate?: Date) => {
     console.log('ViewCases: fetchCases called', { user: !!user, filter, customDate });
@@ -198,42 +210,34 @@ export const ViewCases = () => {
     );
   }
 
-  return (
+  const renderCasesTab = () => (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">View Cases</h1>
-        </div>
-        
-        {/* Summary Cards */}
-        <div className="flex gap-4">
-          <Card className="px-4 py-2">
-            <div className="text-center">
-              <div className="text-lg font-bold">{filteredCases.length}</div>
-              <div className="text-xs text-muted-foreground">Cases</div>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold">{filteredCases.length}</div>
+            <div className="text-sm text-muted-foreground">Total Cases</div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold flex items-center justify-center gap-1">
+              <Calculator className="w-5 h-5" />
+              {totalRVUs.toFixed(1)}
             </div>
-          </Card>
-          <Card className="px-4 py-2">
-            <div className="text-center">
-              <div className="text-lg font-bold flex items-center gap-1">
-                <Calculator className="w-4 h-4" />
-                {totalRVUs.toFixed(1)}
-              </div>
-              <div className="text-xs text-muted-foreground">Total RVU</div>
+            <div className="text-sm text-muted-foreground">Total RVUs</div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold flex items-center justify-center gap-1 text-green-600">
+              <DollarSign className="w-5 h-5" />
+              {totalValue.toFixed(0)}
             </div>
-          </Card>
-          <Card className="px-4 py-2">
-            <div className="text-center">
-              <div className="text-lg font-bold flex items-center gap-1 text-green-600">
-                <DollarSign className="w-4 h-4" />
-                {totalValue.toFixed(0)}
-              </div>
-              <div className="text-xs text-muted-foreground">Est. Value</div>
-            </div>
-          </Card>
-        </div>
+            <div className="text-sm text-muted-foreground">Estimated Value</div>
+          </div>
+        </Card>
       </div>
 
       {/* Filters */}
@@ -245,7 +249,6 @@ export const ViewCases = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Time Filter Dropdown and Custom Date */}
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <div>
@@ -276,7 +279,7 @@ export const ViewCases = () => {
                   onClick={() => {
                     setShowCustomDate(!showCustomDate);
                     if (!showCustomDate) {
-                      setTimeFilter('all'); // Reset time filter when showing custom date
+                      setTimeFilter('all');
                     }
                   }}
                   className="flex items-center gap-2"
@@ -287,7 +290,6 @@ export const ViewCases = () => {
               </div>
             </div>
 
-            {/* Custom Date Picker */}
             {showCustomDate && (
               <div className="p-4 border rounded-lg bg-muted/20">
                 <Label className="text-sm font-medium mb-2 block">Select Custom Date</Label>
@@ -310,7 +312,7 @@ export const ViewCases = () => {
                         }
                       }}
                       initialFocus
-                      className="p-3 pointer-events-auto"
+                      className="p-3"
                     />
                   </PopoverContent>
                 </Popover>
@@ -443,6 +445,54 @@ export const ViewCases = () => {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <Activity className="w-6 h-6 text-primary" />
+        <h1 className="text-2xl font-bold text-foreground">Analytics Dashboard</h1>
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="cases" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Cases
+          </TabsTrigger>
+          <TabsTrigger value="common" className="flex items-center gap-2">
+            <History className="w-4 h-4" />
+            Common
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="procedures" className="flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Procedures
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="cases" className="mt-6">
+          {renderCasesTab()}
+        </TabsContent>
+
+        <TabsContent value="common" className="mt-6">
+          <CommonSection />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6">
+          <AnalyticsSection />
+        </TabsContent>
+
+        <TabsContent value="procedures" className="mt-6">
+          <ProceduresSection />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

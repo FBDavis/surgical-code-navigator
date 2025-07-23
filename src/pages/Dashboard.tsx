@@ -107,8 +107,14 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
         case 'newcase':
           navigate('/new-case');
           break;
+        case 'common':
+          navigate('/view-cases?tab=common');
+          break;
         case 'analytics':
-          navigate('/view-cases');
+          navigate('/view-cases?tab=analytics');
+          break;
+        case 'procedures':
+          navigate('/view-cases?tab=procedures');
           break;
         case 'viewcases':
           navigate('/view-cases');
@@ -316,26 +322,26 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
             title="Common Procedures"
             description="Access your most frequently used CPT codes and procedures"
             icon={History}
-            onClick={() => handleNavigation('viewcases')}
+            onClick={() => handleNavigation('common')}
             count={commonProcedures}
             gradient="from-green-500/20 to-green-600/5"
           />
           
           <HomeCard
-            title="Total Procedure Count"
-            description="View comprehensive statistics and procedure analytics"
-            icon={FileText}
-            onClick={() => handleNavigation('viewcases')}
-            count={thisMonth}
-            gradient="from-purple-500/20 to-purple-600/5"
+            title="Analytics Dashboard"
+            description="RVU analytics, revenue tracking, and productivity trends"
+            icon={BarChart3}
+            onClick={() => handleNavigation('analytics')}
+            gradient="from-orange-500/20 to-orange-600/5"
           />
           
           <HomeCard
-            title="Analytics"
-            description="Detailed RVU analytics and reporting dashboard"
-            icon={BarChart3}
-            onClick={() => handleNavigation('viewcases')}
-            gradient="from-orange-500/20 to-orange-600/5"
+            title="Procedures Overview"
+            description="Comprehensive procedure statistics and profitability analysis"
+            icon={FileText}
+            onClick={() => handleNavigation('procedures')}
+            count={thisMonth}
+            gradient="from-purple-500/20 to-purple-600/5"
           />
           
           <HomeCard
@@ -356,7 +362,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 title="Common"
                 description="Most used codes"
                 icon={History}
-                onClick={() => handleNavigation('viewcases')}
+                onClick={() => handleNavigation('common')}
                 count={commonProcedures}
                 gradient="from-green-500/20 to-green-600/5"
               />
@@ -365,7 +371,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 title="Analytics"
                 description="RVU tracking"
                 icon={BarChart3}
-                onClick={() => handleNavigation('viewcases')}
+                onClick={() => handleNavigation('analytics')}
                 gradient="from-orange-500/20 to-orange-600/5"
               />
             </div>
@@ -375,7 +381,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                 title="Procedures"
                 description="This month"
                 icon={FileText}
-                onClick={() => handleNavigation('viewcases')}
+                onClick={() => handleNavigation('procedures')}
                 count={thisMonth}
                 gradient="from-purple-500/20 to-purple-600/5"
               />
