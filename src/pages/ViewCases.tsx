@@ -457,7 +457,10 @@ export const ViewCases = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => {
+        console.log('Tab changed to:', value);
+        setActiveTab(value);
+      }} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="cases">
             <FileText className="w-4 h-4 mr-2" />
