@@ -459,20 +459,20 @@ export const ViewCases = () => {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="cases" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
+          <TabsTrigger value="cases">
+            <FileText className="w-4 h-4 mr-2" />
             Cases
           </TabsTrigger>
-          <TabsTrigger value="common" className="flex items-center gap-2">
-            <History className="w-4 h-4" />
+          <TabsTrigger value="common">
+            <History className="w-4 h-4 mr-2" />
             Common
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
+          <TabsTrigger value="analytics">
+            <BarChart3 className="w-4 h-4 mr-2" />
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="procedures" className="flex items-center gap-2">
-            <Activity className="w-4 h-4" />
+          <TabsTrigger value="procedures">
+            <Activity className="w-4 h-4 mr-2" />
             Procedures
           </TabsTrigger>
         </TabsList>
