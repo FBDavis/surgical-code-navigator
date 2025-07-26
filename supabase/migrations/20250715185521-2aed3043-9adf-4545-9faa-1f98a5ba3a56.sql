@@ -153,8 +153,24 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  INSERT INTO public.profiles (user_id, email, display_name)
-  VALUES (NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.email));
+  INSERT INTO public.profiles (
+    user_id, 
+    email, 
+    display_name,
+    license_number,
+    default_rvu_rate,
+    onboarding_completed,
+    board_certification
+  )
+  VALUES (
+    NEW.id, 
+    NEW.email, 
+    COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.email),
+    NEW.raw_user_meta_data->>'license_number',
+    65,
+    false,
+    '{}'
+  );
   
   -- Assign default physician role
   INSERT INTO public.user_roles (user_id, role)

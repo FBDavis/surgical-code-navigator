@@ -31,7 +31,7 @@ export function useCommonStats(): CommonStats {
         // Get all case codes for frequency analysis
         const { data: caseCodes, error } = await supabase
           .from('case_codes')
-          .select('cpt_code, description, rvu, created_at')
+          .select('cpt_code, description, rvu_value, created_at')
           .eq('user_id', user.id);
 
         if (error) {
@@ -52,7 +52,7 @@ export function useCommonStats(): CommonStats {
               code: code.cpt_code, 
               description: code.description, 
               count: 0, 
-              rvu: code.rvu 
+              rvu: code.rvu_value 
             };
           }
           acc[key].count++;
@@ -70,7 +70,7 @@ export function useCommonStats(): CommonStats {
           .map(code => ({
             code: code.cpt_code,
             description: code.description,
-            rvu: code.rvu,
+            rvu: code.rvu_value,
             date: new Date(code.created_at).toLocaleDateString()
           }));
 

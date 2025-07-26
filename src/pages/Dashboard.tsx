@@ -193,7 +193,7 @@ export const Dashboard = ({ onTabChange }: DashboardProps) => {
                   {...generalTips} 
                   className="mr-2"
                 />
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => handleNavigation('settings')}>
                   <User className="w-4 h-4 mr-2" />
                   Profile
                 </Button>

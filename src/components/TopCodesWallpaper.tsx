@@ -67,7 +67,7 @@ const TopCodesWallpaper = ({ onWallpaperGenerated }: TopCodesWallpaperProps) => 
         .select(`
           cpt_code,
           description,
-          rvu
+          rvu_value
         `)
         .eq('user_id', user.id);
 
@@ -86,7 +86,7 @@ const TopCodesWallpaper = ({ onWallpaperGenerated }: TopCodesWallpaperProps) => 
           };
         }
         acc[key].count += 1;
-        acc[key].total_rvu += code.rvu || 0;
+        acc[key].total_rvu += code.rvu_value || 0;
         return acc;
       }, {}) || {};
 

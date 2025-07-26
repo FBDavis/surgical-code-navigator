@@ -21,6 +21,8 @@ export default function Auth() {
   const [licenseNumber, setLicenseNumber] = useState('');
   const [practiceName, setPracticeName] = useState('');
   const [specialty, setSpecialty] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [userRole, setUserRole] = useState('practicing_surgeon');
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('signin');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
@@ -29,7 +31,7 @@ export default function Auth() {
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, signUp } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -136,21 +138,16 @@ export default function Auth() {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const userMetadata = {
+        display_name: displayName,
+        license_number: licenseNumber,
+        practice_name: practiceName,
+        user_role: userRole,
+        subspecialty: specialty || null,
+        institution: institution,
+      };
       
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            display_name: displayName,
-            license_number: licenseNumber,
-            practice_name: practiceName,
-            specialty: specialty || null,
-          }
-        }
-      });
+      const { error } = await signUp(email, password, displayName, specialty, userMetadata);
 
       if (error) throw error;
 
@@ -464,46 +461,77 @@ export default function Auth() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="specialty">Medical Specialty</Label>
-                      <Select value={specialty} onValueChange={setSpecialty} disabled={isLoading}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your specialty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="orthopedics">Orthopedics</SelectItem>
-                          <SelectItem value="general_surgery">General Surgery</SelectItem>
-                          <SelectItem value="plastic_surgery">Plastic Surgery</SelectItem>
-                          <SelectItem value="ent">ENT (Otolaryngology)</SelectItem>
-                          <SelectItem value="cardiothoracic">Cardiothoracic Surgery</SelectItem>
-                          <SelectItem value="neurosurgery">Neurosurgery</SelectItem>
-                          <SelectItem value="urology">Urology</SelectItem>
-                          <SelectItem value="gynecology">Gynecology</SelectItem>
-                          <SelectItem value="ophthalmology">Ophthalmology</SelectItem>
-                          <SelectItem value="dermatology">Dermatology</SelectItem>
-                          <SelectItem value="gastroenterology">Gastroenterology</SelectItem>
-                          <SelectItem value="emergency_medicine">Emergency Medicine</SelectItem>
-                          <SelectItem value="family_medicine">Family Medicine</SelectItem>
-                          <SelectItem value="internal_medicine">Internal Medicine</SelectItem>
-                          <SelectItem value="radiology">Radiology</SelectItem>
-                          <SelectItem value="anesthesiology">Anesthesiology</SelectItem>
-                          <SelectItem value="pathology">Pathology</SelectItem>
-                          <SelectItem value="psychiatry">Psychiatry</SelectItem>
-                          <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                          <SelectItem value="oncology">Oncology</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="userRole">Role</Label>
+                        <Select value={userRole} onValueChange={setUserRole} disabled={isLoading}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="practicing_surgeon">Practicing Surgeon</SelectItem>
+                            <SelectItem value="resident">Resident</SelectItem>
+                            <SelectItem value="fellow">Fellow</SelectItem>
+                            <SelectItem value="scribe">Scribe</SelectItem>
+                            <SelectItem value="coder">Coder</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="specialty">Medical Specialty</Label>
+                        <Select value={specialty} onValueChange={setSpecialty} disabled={isLoading}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your specialty" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="orthopedics">Orthopedics</SelectItem>
+                            <SelectItem value="general_surgery">General Surgery</SelectItem>
+                            <SelectItem value="plastic_surgery">Plastic Surgery</SelectItem>
+                            <SelectItem value="ent">ENT (Otolaryngology)</SelectItem>
+                            <SelectItem value="cardiothoracic">Cardiothoracic Surgery</SelectItem>
+                            <SelectItem value="neurosurgery">Neurosurgery</SelectItem>
+                            <SelectItem value="urology">Urology</SelectItem>
+                            <SelectItem value="gynecology">Gynecology</SelectItem>
+                            <SelectItem value="ophthalmology">Ophthalmology</SelectItem>
+                            <SelectItem value="dermatology">Dermatology</SelectItem>
+                            <SelectItem value="gastroenterology">Gastroenterology</SelectItem>
+                            <SelectItem value="emergency_medicine">Emergency Medicine</SelectItem>
+                            <SelectItem value="family_medicine">Family Medicine</SelectItem>
+                            <SelectItem value="internal_medicine">Internal Medicine</SelectItem>
+                            <SelectItem value="radiology">Radiology</SelectItem>
+                            <SelectItem value="anesthesiology">Anesthesiology</SelectItem>
+                            <SelectItem value="pathology">Pathology</SelectItem>
+                            <SelectItem value="psychiatry">Psychiatry</SelectItem>
+                            <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                            <SelectItem value="oncology">Oncology</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="practiceName">Practice/Hospital Name</Label>
-                      <Input
-                        id="practiceName"
-                        value={practiceName}
-                        onChange={(e) => setPracticeName(e.target.value)}
-                        placeholder="City Medical Center"
-                        disabled={isLoading}
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="practiceName">Practice/Hospital Name</Label>
+                        <Input
+                          id="practiceName"
+                          value={practiceName}
+                          onChange={(e) => setPracticeName(e.target.value)}
+                          placeholder="City Medical Center"
+                          disabled={isLoading}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="institution">Institution</Label>
+                        <Input
+                          id="institution"
+                          value={institution}
+                          onChange={(e) => setInstitution(e.target.value)}
+                          placeholder="Medical School or Institution"
+                          disabled={isLoading}
+                        />
+                      </div>
                     </div>
                     
                     <div className="space-y-2">

@@ -35,7 +35,7 @@ export function useProceduresStats(): ProceduresStats {
         // Get all case codes with RVU rate for calculations
         const { data: caseCodes, error: caseCodesError } = await supabase
           .from('case_codes')
-          .select('cpt_code, description, rvu, category')
+          .select('cpt_code, description, rvu_value, category')
           .eq('user_id', user.id);
 
         // Get user's RVU rate

@@ -11,7 +11,6 @@ interface Profile {
   practice_name: string | null;
   default_rvu_rate: number | null;
   specialty_id: string | null;
-  specialty_theme: any;
   user_role: string | null;
   subspecialty: string | null;
   onboarding_completed: boolean;
@@ -37,7 +36,7 @@ interface AuthContextType {
   subscriptionStatus: SubscriptionStatus | null;
   checkSubscription: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, displayName?: string, specialty?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, displayName?: string, specialty?: string, userMetadata?: any) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
 }
@@ -91,14 +90,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize session
     const initializeAuth = async () => {
       try {
-        console.log('Initializing auth...');
         const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('Session retrieved:', !!session, error);
         
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
-          console.log('User set:', !!session?.user, session?.user?.email);
           
           // Always set loading to false after getting session
           setLoading(false);
@@ -114,7 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .eq('user_id', session.user.id)
                 .single();
               
-              console.log('Profile fetch:', !!profileData, profileError);
               if (!profileError && profileData && mounted) {
                 setProfile(profileData);
               }
@@ -140,16 +135,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false); // Always set loading to false when auth state changes
           
           if (session?.user) {
-            // Fetch user profile
-            const { data: profileData, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            if (!error && profileData && mounted) {
-              setProfile(profileData);
-            }
+            // Fetch user profile with a small delay to ensure session is fully established
+            setTimeout(async () => {
+              if (!mounted) return;
+              
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              if (!error && profileData && mounted) {
+                setProfile(profileData);
+              }
+            }, 100);
           } else {
             setProfile(null);
             setSubscriptionStatus(null);
@@ -181,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const signUp = async (email: string, password: string, displayName?: string, specialty?: string) => {
+  const signUp = async (email: string, password: string, displayName?: string, specialty?: string, userMetadata?: any) => {
     const redirectUrl = `${window.location.origin}/`;
     
     // Get specialty theme based on selection
@@ -203,31 +202,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return themes[spec as keyof typeof themes] || { primary_color: "195 100% 28%", accent_color: "195 50% 88%", name: "General Medicine" };
     };
     
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          display_name: displayName || email.split('@')[0],
-          specialty: specialty || null,
-          specialty_theme: specialty ? getSpecialtyTheme(specialty) : null,
+    console.log('Starting signup process...');
+    let data, error;
+    try {
+      const result = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            display_name: displayName || email.split('@')[0],
+            specialty: specialty || null,
+          },
         },
-      },
-    });
+      });
+      
+      data = result.data;
+      error = result.error;
+    } catch (signupError) {
+      console.error('Signup exception:', signupError);
+      return { error: signupError };
+    }
+    
+    // If signup was successful and we have a user, create a profile
+    if (!error && data.user) {
+      try {
+        // Create profile with form data if available
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user.id,
+            email: data.user.email,
+            display_name: displayName || email.split('@')[0],
+            license_number: userMetadata?.license_number || '',
+            practice_name: userMetadata?.practice_name || '',
+            institution: userMetadata?.institution || '',
+            user_role: userMetadata?.user_role || '',
+            subspecialty: userMetadata?.subspecialty || '',
+            year_of_training: userMetadata?.year_of_training || null,
+            default_rvu_rate: 65,
+          })
+          .select()
+          .single();
+        
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          // Don't return the profile error as the user was created successfully
+        } else if (profileData) {
+          // Set the profile in state immediately
+          setProfile(profileData);
+        }
+      } catch (error) {
+        console.error('Exception during profile creation:', error);
+      }
+    }
+    
     return { error };
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
+    try {
+      // Clear local storage
+      localStorage.removeItem('sb-vkvneoujpipapcxgdopg-auth-token');
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Clear state immediately
       setUser(null);
       setSession(null);
       setProfile(null);
-      // Use hash router compatible navigation
+      
+      // Redirect immediately
       window.location.hash = '#/auth';
+      
+      // Try the Supabase call in the background (but don't wait for it)
+      supabase.auth.signOut().catch((err) => {
+        console.warn('Background Supabase signOut failed:', err);
+      });
+      
+      return { error: null };
+    } catch (err) {
+      console.error('SignOut exception:', err);
+      return { error: err };
     }
-    return { error };
   };
 
   const updateProfile = async (updates: any) => {

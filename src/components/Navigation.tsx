@@ -22,7 +22,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   // If we're in guest mode, treat as not authenticated regardless of user state
   const isAuthenticated = !isGuest && !!user;
   
-  console.log('Navigation auth state:', { user: !!user, isGuest, isAuthenticated });
+  console.log('Navigation auth state:', { user: !!user, userEmail: user?.email, isGuest, isAuthenticated });
 
   const tabs = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -39,11 +39,15 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
   ];
 
   const handleAuthAction = async () => {
+    console.log('handleAuthAction called, isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
       // User is logged in, log them out
-      await signOut();
+      console.log('Attempting to sign out...');
+      const result = await signOut();
+      console.log('Sign out result:', result);
     } else {
       // User is not logged in (guest or no auth), redirect to auth page
+      console.log('Redirecting to auth page...');
       navigate('/auth');
     }
   };

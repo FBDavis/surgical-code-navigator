@@ -7,7 +7,7 @@ export const SpecialtyBranding = () => {
   useEffect(() => {
     // Apply specialty theme colors if available
     const specialty = profile?.specialty_id || user?.user_metadata?.specialty;
-    const theme = profile?.specialty_theme || user?.user_metadata?.specialty_theme;
+    const theme = user?.user_metadata?.specialty_theme;
     
     if (theme && theme.primary_color) {
       document.documentElement.style.setProperty('--primary', theme.primary_color);
@@ -47,7 +47,7 @@ export const SpecialtyBranding = () => {
   };
 
   const specialty = profile?.specialty_id || user?.user_metadata?.specialty;
-  const theme = profile?.specialty_theme || user?.user_metadata?.specialty_theme;
+  const theme = user?.user_metadata?.specialty_theme;
   
   if (!specialty) return null;
 

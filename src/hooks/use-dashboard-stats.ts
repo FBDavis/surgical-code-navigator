@@ -43,13 +43,11 @@ export function useDashboardStats(): DashboardStats {
             id,
             case_name,
             procedure_date,
-            total_rvu,
-            estimated_value,
             created_at,
             case_codes (
               cpt_code,
               description,
-              rvu,
+              rvu_value,
               is_primary,
               created_at
             )
@@ -85,8 +83,8 @@ export function useDashboardStats(): DashboardStats {
           new Date(code.created_at) >= thisMonthStart
         ).length;
 
-        // Total RVUs
-        const totalRVUs = cases.reduce((sum, c) => sum + (c.total_rvu || 0), 0);
+        // Total RVUs (sum of all case codes RVUs)
+        const totalRVUs = allCodes.reduce((sum, code) => sum + (code.rvu_value || 0), 0);
 
         // Recent codes (last 5 codes added)
         const recentCodes = allCodes
@@ -95,7 +93,7 @@ export function useDashboardStats(): DashboardStats {
           .map(code => ({
             code: code.cpt_code,
             description: code.description,
-            rvu: code.rvu,
+            rvu: code.rvu_value,
             date: new Date(code.created_at).toLocaleDateString()
           }));
 
@@ -103,7 +101,7 @@ export function useDashboardStats(): DashboardStats {
         const codeFrequency = allCodes.reduce((acc, code) => {
           const key = code.cpt_code;
           if (!acc[key]) {
-            acc[key] = { count: 0, rvu: code.rvu, code: code.cpt_code };
+            acc[key] = { count: 0, rvu: code.rvu_value, code: code.cpt_code };
           }
           acc[key].count++;
           return acc;

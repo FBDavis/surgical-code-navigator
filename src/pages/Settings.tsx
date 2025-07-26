@@ -1,14 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, RotateCcw } from 'lucide-react';
+import { Trash2, RotateCcw, User, Mail, Building, GraduationCap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Settings = () => {
   const [isResetting, setIsResetting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
+  const { profile, updateProfile, loading, user, session } = useAuth();
+  
+
+  
+  const [profileData, setProfileData] = useState({
+    display_name: '',
+    license_number: '',
+    practice_name: '',
+    default_rvu_rate: 65,
+    institution: '',
+    user_role: '',
+    subspecialty: '',
+    year_of_training: null,
+  });
+
+  // Update profile data when profile loads
+  useEffect(() => {
+    if (profile) {
+      setProfileData({
+        display_name: profile.display_name || '',
+        license_number: profile.license_number || '',
+        practice_name: profile.practice_name || '',
+        default_rvu_rate: profile.default_rvu_rate || 65,
+        institution: profile.institution || '',
+        user_role: profile.user_role || '',
+        subspecialty: profile.subspecialty || '',
+        year_of_training: profile.year_of_training || null,
+      });
+    }
+  }, [profile]);
 
   const handleResetUserData = async () => {
     setIsResetting(true);
@@ -39,6 +74,32 @@ export const Settings = () => {
     }
   };
 
+  const handleUpdateProfile = async () => {
+    setIsUpdating(true);
+    try {
+      const { error } = await updateProfile(profileData);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Update Failed",
+        description: "There was an error updating your profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -47,6 +108,110 @@ export const Settings = () => {
       </div>
 
       <div className="grid gap-6">
+        {/* Profile Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Settings
+            </CardTitle>
+            <CardDescription>
+              Update your personal information and preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading profile...</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="display_name">Display Name</Label>
+                    <Input
+                      id="display_name"
+                      value={profileData.display_name}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, display_name: e.target.value }))}
+                      placeholder="Dr. John Smith"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="license_number">License Number</Label>
+                    <Input
+                      id="license_number"
+                      value={profileData.license_number}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, license_number: e.target.value }))}
+                      placeholder="123456"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="practice_name">Practice Name</Label>
+                    <Input
+                      id="practice_name"
+                      value={profileData.practice_name}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, practice_name: e.target.value }))}
+                      placeholder="City General Hospital"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="institution">Institution</Label>
+                    <Input
+                      id="institution"
+                      value={profileData.institution}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, institution: e.target.value }))}
+                      placeholder="University Medical Center"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="user_role">Role</Label>
+                    <Select value={profileData.user_role} onValueChange={(value) => setProfileData(prev => ({ ...prev, user_role: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="attending">Attending Physician</SelectItem>
+                        <SelectItem value="resident">Resident</SelectItem>
+                        <SelectItem value="fellow">Fellow</SelectItem>
+                        <SelectItem value="nurse_practitioner">Nurse Practitioner</SelectItem>
+                        <SelectItem value="physician_assistant">Physician Assistant</SelectItem>
+                        <SelectItem value="medical_student">Medical Student</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="default_rvu_rate">Default RVU Rate ($)</Label>
+                    <Input
+                      id="default_rvu_rate"
+                      type="number"
+                      value={profileData.default_rvu_rate}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, default_rvu_rate: parseFloat(e.target.value) || 65 }))}
+                      placeholder="65"
+                    />
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={handleUpdateProfile} 
+                  disabled={isUpdating}
+                  className="w-full md:w-auto"
+                >
+                  {isUpdating ? 'Updating...' : 'Update Profile'}
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Data Management */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

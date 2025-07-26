@@ -26,8 +26,7 @@ export const Leaderboards = () => {
           *,
           profiles (
             display_name,
-            email,
-            specialty_theme
+            email
           )
         `)
         .eq('period_type', 'weekly')
@@ -41,8 +40,7 @@ export const Leaderboards = () => {
           *,
           profiles (
             display_name,
-            email,
-            specialty_theme
+            email
           )
         `)
         .eq('period_type', 'monthly')
@@ -56,8 +54,7 @@ export const Leaderboards = () => {
           *,
           profiles (
             display_name,
-            email,
-            specialty_theme
+            email
           )
         `)
         .eq('period_type', 'all_time')

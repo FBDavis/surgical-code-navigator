@@ -34,9 +34,9 @@ serve(async (req) => {
       chatHistory = []
     } = await req.json();
     
-    const openaiApiKey = Deno.env.get('OpCoder AI Key');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OpCoder AI Key');
     if (!openaiApiKey) {
-      throw new Error('OpCoder AI Key not configured');
+      throw new Error('OpenAI API Key not configured');
     }
 
     // Build context for the AI
